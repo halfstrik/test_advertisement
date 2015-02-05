@@ -1,0 +1,9 @@
+# Ignore IDE specific files
+# Intellij IDEA project files
+.idea
+
+# Ignore python pre compiled files
+__pycache__
+
+# Ignore project database
+*.sqlite3
