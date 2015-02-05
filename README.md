@@ -7,6 +7,6 @@ Project is tested against:
 * Django==1.7.4
 
 ### Before make Pull Request
-Enshure that all tests are passed:
+Ensure that all tests are passed:
 
 `python manage.py test`
