@@ -1,3 +1,4 @@
 from django.conf.urls import patterns, url
+
 urlpatterns = patterns('',
-                       url(r'^$', 'texts.views.index', name='index'), )
+                       url(r'^add_text_couple/$', 'texts.views.add_text_couple', name='add_text_couple'), )
