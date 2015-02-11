@@ -1,5 +1,2 @@
-from django.http import HttpResponse
-
-
-def index(request):
-    return HttpResponse('Placeholder view')
+def add_text_couple(request):
+    pass
