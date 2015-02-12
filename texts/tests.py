@@ -1,6 +1,5 @@
 from django.core.urlresolvers import reverse
 from django.test import TestCase, Client
-
 from texts.forms import TextCoupleForm
 from texts.models import TextCouple
 
