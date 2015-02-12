@@ -64,5 +64,5 @@ class FormTests(TestCase):
                                          'long': '0123456789' * 14 + 'a'}).is_valid())
 
     def test_TextCoupleForm_with_long_text_len_equals_140(self):
-        self.assertFalse(TextCoupleForm({'short': '0124',
-                                         'long': '0123456789' * 14}).is_valid())
+        self.assertTrue(TextCoupleForm({'short': '0124',
+                                        'long': '0123456789' * 14}).is_valid())
