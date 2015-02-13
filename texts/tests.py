@@ -1,3 +1,5 @@
+import random
+
 from django.core.urlresolvers import reverse
 from django.test import TestCase, Client
 
@@ -52,6 +54,16 @@ class ViewTests(TestCase):
         self.assertNotContains(response, 'No text couples were created yet')
         self.assertContains(response, 'short text')
         self.assertContains(response, 'long text')
+
+    def test_list_text_couples_http_get_with_one_text_couple_random_text(self):
+        short = ''.join(random.sample('abcdefjk', 6))
+        long = ''.join(random.sample('zxytrewq', 7))
+        TextCouple.objects.create(short=short, long=long)
+        client = Client()
+        response = client.get(reverse('texts:list_text_couples'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, short)
+        self.assertContains(response, long)
 
 
 class FormTests(TestCase):
