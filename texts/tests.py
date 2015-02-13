@@ -65,3 +65,24 @@ class FormTests(TestCase):
     def test_TextCoupleForm_with_long_text_len_equals_140(self):
         self.assertTrue(TextCoupleForm({'short': '0124',
                                         'long': '0123456789' * 14}).is_valid())
+
+    def test_list_text_couples_http_get_with_no_text_couples(self):
+        client = Client()
+        response = client.get(reverse('texts:list_text_couples'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No text couples were created yet')
+
+    def test_list_text_couples_http_get_must_offer_link_for_adding(self):
+        client = Client()
+        response = client.get(reverse('texts:list_text_couples'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '<a href="%s">Add text couple</a>' % reverse('texts:add_text_couple'))
+
+    def test_list_text_couples_http_get_with_one_text_couple(self):
+        TextCouple.objects.create(short='short text', long='long text')
+        client = Client()
+        response = client.get(reverse('texts:list_text_couples'))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'No text couples were created yet')
+        self.assertContains(response, 'short text')
+        self.assertContains(response, 'long text')
