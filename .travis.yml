@@ -1,0 +1,7 @@
+language: python
+python:
+  - "3.4"
+install:
+  - pip install django==1.7.4
+
+script: python manage.py test

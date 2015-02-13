@@ -65,6 +65,12 @@ class ViewTests(TestCase):
         self.assertContains(response, short)
         self.assertContains(response, long)
 
+    def test_list_text_couples_http_get_with_no_text_couples(self):
+        client = Client()
+        response = client.get(reverse('texts:list_text_couples'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No text couples were created yet')
+
 
 class FormTests(TestCase):
     def test_TextCoupleForm_with_short_text_len_equals_31(self):
