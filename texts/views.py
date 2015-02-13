@@ -3,6 +3,7 @@ from texts.models import TextCouple
 from texts.forms import TextCoupleForm
 from django.template import RequestContext
 from django.template.loader import get_template
+from django.core.urlresolvers import reverse
 
 
 def add_text_couple(request):
@@ -11,7 +12,7 @@ def add_text_couple(request):
         form = TextCoupleForm(request.POST)
         if form.is_valid():
             record_text_couple_in_db(form)
-            return HttpResponseRedirect('/texts/add_text_couple/')
+            return HttpResponseRedirect(reverse('texts:list_text_couples'))
     html = get_template('form.html').render(RequestContext(request, {'form': form, }))
     return HttpResponse(html)
 
@@ -29,6 +30,8 @@ def list_text_couples(request):
         html = get_template('list_text_couples.html').render(RequestContext(request, {
             'content': 'No text couples were created yet', }))
     else:
+        text_couples = TextCouple.objects.all()
+
         html = get_template('list_text_couples.html').render(RequestContext(request, {
-            'content': 'short text long text', }))
+            'text_couples': text_couples, }))
     return HttpResponse(html)

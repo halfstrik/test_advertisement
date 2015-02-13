@@ -2,6 +2,16 @@
 
 
 {% block content %}
+    <table width="200" border="0">
+        <tbody>
+        {% for text_couple in  text_couples  %}
+            <tr>
+                <td>{{ text_couple.short }}</td>
+                <td>{{ text_couple.long }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
     <p>{{ content }}</p>
     <a href="/texts/add_text_couple/">Add text couple</a>
 {% endblock %}
