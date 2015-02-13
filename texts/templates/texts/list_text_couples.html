@@ -1,0 +1,14 @@
+{% extends "texts/base.html" %}
+
+{% block content %}
+{% if text_couples %}
+<ul>
+    {% for text_couple in text_couples %}
+    <li>{{ text_couple.short }} - {{ text_couple.long }}</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No text couples were created yet.</p>
+{% endif %}
+<a href="{% url 'texts:add_text_couple' %}">Add text couple</a>
+{% endblock %}
