@@ -65,11 +65,17 @@ class ViewTests(TestCase):
         self.assertContains(response, short)
         self.assertContains(response, long)
 
-    def test_list_text_couples_http_get_with_no_text_couples(self):
+    def test_list_text_couples_http_get_with_no_text_couples_not_contains_table(self):
         client = Client()
         response = client.get(reverse('texts:list_text_couples'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'No text couples were created yet')
+        self.assertNotContains(response, '<table width="200" border="0">', html=True)
+
+    def test_list_text_couples_http_get_with_empty_list_text_couples(self):
+        client = Client()
+        response = client.get(reverse('texts:list_text_couples'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['text_couples']), 0)
 
 
 class FormTests(TestCase):
