@@ -25,13 +25,6 @@ def record_text_couple_in_db(form):
 
 
 def list_text_couples(request):
-    amount_text_couples = TextCouple.objects.count()
-    if amount_text_couples == 0:
-        html = get_template('list_text_couples.html').render(RequestContext(request, {
-            'content': 'No text couples were created yet', }))
-    else:
-        text_couples = TextCouple.objects.all()
-
-        html = get_template('list_text_couples.html').render(RequestContext(request, {
-            'text_couples': text_couples, }))
+    text_couples = TextCouple.objects.all()
+    html = get_template('list_text_couples.html').render(RequestContext(request, {'text_couples': text_couples, }))
     return HttpResponse(html)

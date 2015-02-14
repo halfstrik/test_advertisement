@@ -2,6 +2,7 @@
 
 
 {% block content %}
+    {% if text_couples %}
     <table width="200" border="0">
         <tbody>
         {% for text_couple in  text_couples  %}
@@ -12,6 +13,8 @@
         {% endfor %}
         </tbody>
     </table>
-    <p>{{ content }}</p>
+    {% else %}
+    <p>No text couples were created yet.</p>
+    {% endif %}
     <a href="/texts/add_text_couple/">Add text couple</a>
 {% endblock %}
