@@ -90,6 +90,7 @@ class ViewTests(TestCase):
         response = Client().get(reverse('texts:del_text_couple', args=[text_id]))
         self.assertContains(response, 'csrfmiddlewaretoken')
         self.assertContains(response, '<input type="submit" value="Delete">')
+        self.assertContains(response, short)
 
     def test_del_text_couple_http_post_redirect_to_list_text_couple(self):
         text_id, short, long = create_valid_random_text_couple()
@@ -148,6 +149,7 @@ class ViewTests(TestCase):
         self.assertContains(response, 'form')
         self.assertContains(response, 'csrfmiddlewaretoken')
         self.assertContains(response, TextCoupleForm().as_table())
+        self.assertContains(response, 'Make edition for %s' % short)
 
     def test_change_text_couple_http_post_empty_form(self):
         text_id, short, long = create_valid_random_text_couple()

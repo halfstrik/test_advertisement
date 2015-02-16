@@ -6,7 +6,6 @@ from django.template.loader import get_template
 from django.core.urlresolvers import reverse
 
 from texts.models import TextCouple
-
 from texts.forms import TextCoupleForm
 
 
@@ -44,7 +43,7 @@ def delete_text_couple(request, text_couple_id):
     if request.method == 'POST':
         text_couple.delete()
         return HttpResponseRedirect(reverse('texts:list_text_couples'))
-    return render(request, 'texts/delete_text_couple.html')
+    return render(request, 'texts/delete_text_couple.html', {'text_couple': text_couple})
 
 
 def change_text_couple(request, text_couple_id):
@@ -59,4 +58,4 @@ def change_text_couple(request, text_couple_id):
             text_couple.long = long_text
             text_couple.save()
             return HttpResponseRedirect(reverse('texts:list_text_couples'))
-    return render(request, 'texts/change_text_couple.html', {'form': form})
+    return render(request, 'texts/change_text_couple.html', {'form': form, 'text_couple': text_couple})
