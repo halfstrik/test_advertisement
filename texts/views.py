@@ -40,20 +40,21 @@ def view_text_couple(request, text_couple_id):
 
 
 def delete_text_couple(request, text_couple_id):
+    text_couple = get_object_or_404(TextCouple, pk=text_couple_id)
     if request.method == 'POST':
-        TextCouple.objects.get(pk=text_couple_id).delete()
+        text_couple.delete()
         return HttpResponseRedirect(reverse('texts:list_text_couples'))
     return render(request, 'texts/delete_text_couple.html')
 
 
 def change_text_couple(request, text_couple_id):
+    text_couple = get_object_or_404(TextCouple, pk=text_couple_id)
     form = TextCoupleForm()
     if request.method == 'POST':
         form = TextCoupleForm(request.POST)
         if form.is_valid():
             short_text = form.cleaned_data['short']
             long_text = form.cleaned_data['long']
-            text_couple = TextCouple.objects.get(pk=text_couple_id)
             text_couple.short = short_text
             text_couple.long = long_text
             text_couple.save()

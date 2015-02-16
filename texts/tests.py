@@ -97,6 +97,10 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.endswith(reverse('texts:list_text_couples')))
 
+    def test_del_text_couple_http_get_when_no_such_text_couple(self):
+        response = Client().get(reverse('texts:del_text_couple', args=[1]))
+        self.assertEqual(response.status_code, 404)
+
     def test_change_text_couple_http_post(self):
         text_id, short, long = create_valid_random_text_couple()
         change_short = ''.join(random.sample('abcdefjk', 6))
@@ -109,6 +113,10 @@ class ViewTests(TestCase):
         self.assertNotContains(response, long)
         self.assertContains(response, change_short)
         self.assertContains(response, change_long)
+
+    def test_change_text_couple_http_get_when_no_such_text_couple(self):
+        response = Client().get(reverse('texts:change_text_couple', args=[1]))
+        self.assertEqual(response.status_code, 404)
 
     def test_change_text_couple_http_post_redirect_to_view_text_couple(self):
         text_id, short, long = create_valid_random_text_couple()
