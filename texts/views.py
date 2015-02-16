@@ -1,5 +1,5 @@
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.template import RequestContext
 from django.template.loader import get_template
 from django.core.urlresolvers import reverse
@@ -34,11 +34,7 @@ def list_text_couples(request):
 
 def view_text_couple(request, text_couple_id):
     text_couple = get_object_or_404(TextCouple, pk=text_couple_id)
-    return HttpResponse('%s %s' % (text_couple.short, text_couple.long) +
-                        '<a href="%s">Delete text couple</a>'
-                        % reverse('texts:del_text_couple', args=[text_couple_id]) +
-                        '<a href="%s">Change text couple</a>'
-                        % reverse('texts:change_text_couple', args=[text_couple_id]))
+    return render(request, 'texts/view_text_couple.html', {'text_couple': text_couple})
 
 
 def delete_text_couple(request, text_couple_id):

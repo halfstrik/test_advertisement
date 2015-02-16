@@ -2,21 +2,22 @@
 
 
 {% block content %}
-    {% if text_couples %}
-    <table width="200" border="0">
-        <tbody>
-        {% for text_couple in  text_couples  %}
-            <tr>
-                <td>{{ text_couple.short }}</td>
-                <td>{{ text_couple.long }}</td>
-                <td><a href="{% url 'texts:view_text_couple' text_couple.pk %}">{{ text_couple.short }} {{
-                    text_couple.long }}</a></td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>No text couples were created yet.</p>
-    {% endif %}
-    <a href="/texts/add_text_couple/">Add text couple</a>
+{% if text_couples %}
+<table width="200" border="0">
+    <tbody>
+    {% for text_couple in text_couples %}
+    <tr>
+        <td>{{ text_couple.short }}</td>
+        <td>{{ text_couple.long }}</td>
+        <td>
+            <a href="{% url 'texts:view_text_couple' text_couple.pk %}">{{ text_couple.short }} {{text_couple.long}}</a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No text couples were created yet.</p>
+{% endif %}
+<a href="/texts/add_text_couple/">Add text couple</a>
 {% endblock %}
