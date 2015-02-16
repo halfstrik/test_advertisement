@@ -1,9 +1,11 @@
 from django.http import HttpResponse, HttpResponseRedirect
-from texts.models import TextCouple
-from texts.forms import TextCoupleForm
+from django.shortcuts import get_object_or_404, render
 from django.template import RequestContext
 from django.template.loader import get_template
 from django.core.urlresolvers import reverse
+
+from texts.models import TextCouple
+from texts.forms import TextCoupleForm
 
 
 def add_text_couple(request):
@@ -28,3 +30,25 @@ def list_text_couples(request):
     text_couples = TextCouple.objects.all()
     html = get_template('list_text_couples.html').render(RequestContext(request, {'text_couples': text_couples, }))
     return HttpResponse(html)
+
+
+def view_text_couple(request, text_couple_id):
+    text_couple = get_object_or_404(TextCouple, pk=text_couple_id)
+    return render(request, 'texts/view_text_couple.html', {'text_couple': text_couple})
+
+
+def delete_text_couple(request, text_couple_id):
+    TextCouple.objects.get(pk=text_couple_id).delete()
+    return HttpResponseRedirect(reverse('texts:list_text_couples'))
+
+
+def change_text_couple(request, text_couple_id):
+    form = TextCoupleForm(request.POST)
+    form.is_valid()
+    short_text = form.cleaned_data['short']
+    long_text = form.cleaned_data['long']
+    text_couple = TextCouple.objects.get(pk=text_couple_id)
+    text_couple.short = short_text
+    text_couple.long = long_text
+    text_couple.save()
+    return HttpResponseRedirect(reverse('texts:list_text_couples'))
