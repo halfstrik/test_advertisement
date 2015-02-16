@@ -102,10 +102,9 @@ class ViewTests(TestCase):
         id_text_couple = random.randint(1, 10)
         TextCouple.objects.create(id=id_text_couple, short=short, long=long)
         client = Client()
-        client.get(reverse('texts:del_text_couple', args=[id_text_couple]))
-        response = client.get(reverse('texts:list_text_couples'))
-        self.assertNotContains(response, short)
-        self.assertNotContains(response, long)
+        response = client.get(reverse('texts:del_text_couple', args=[id_text_couple]))
+        self.assertContains(response, 'csrfmiddlewaretoken')
+        self.assertContains(response, '<input type="submit" value="Delete">')
 
     def test_del_text_couple_http_post_redirect_to_list_text_couple(self):
         short = 'short'
@@ -113,7 +112,7 @@ class ViewTests(TestCase):
         id_text_couple = random.randint(1, 10)
         TextCouple.objects.create(id=id_text_couple, short=short, long=long)
         client = Client()
-        response = client.get(reverse('texts:del_text_couple', args=[id_text_couple]))
+        response = client.post(reverse('texts:del_text_couple', args=[id_text_couple]))
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.endswith(reverse('texts:list_text_couples')))
 
@@ -167,6 +166,27 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<a href="%s">Change text couple</a>' % reverse('texts:change_text_couple',
                                                                                       args=[id_text_couple]))
+
+    def test_change_text_couple_http_get(self):
+        short = 'short'
+        long = 'long'
+        id_text_couple = random.randint(1, 10)
+        TextCouple.objects.create(id=id_text_couple, short=short, long=long)
+        client = Client()
+        response = client.get(reverse('texts:change_text_couple', args=[id_text_couple]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'form')
+        self.assertContains(response, 'csrfmiddlewaretoken')
+        self.assertContains(response, TextCoupleForm().as_table())
+
+    def test_change_text_couple_http_post_empty_form(self):
+        short = 'short'
+        long = 'long'
+        id_text_couple = random.randint(1, 10)
+        TextCouple.objects.create(id=id_text_couple, short=short, long=long)
+        client = Client()
+        response = client.post(reverse('texts:change_text_couple', args=[id_text_couple]))
+        self.assertContains(response, 'This field is required')
 
 
 class FormTests(TestCase):
