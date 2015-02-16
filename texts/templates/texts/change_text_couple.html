@@ -1,0 +1,13 @@
+{% extends "index.html" %}
+
+
+{% block content %}
+<h1>Make edition for {{ text_couple }}</h1>
+<form action="" method="post">
+    <table>
+        {% csrf_token %}
+        {{ form.as_table }}
+    </table>
+    <input type="submit" value="Save">
+</form>
+{% endblock %}

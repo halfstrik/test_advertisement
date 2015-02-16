@@ -1,0 +1,8 @@
+{% extends "index.html" %}
+
+
+{% block content %}
+<p>{{ text_couple.short }} {{ text_couple.long }}</p>
+<a href="{% url 'texts:del_text_couple' text_couple.pk %}">Delete text couple</a>
+<a href="{% url 'texts:change_text_couple' text_couple.pk %}">Change text couple</a>
+{% endblock %}
