@@ -7,7 +7,6 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.defaults import permission_denied
 
-from test_advertisement.settings import LOGIN_URL
 from texts.models import TextCouple
 from texts.forms import TextCoupleForm
 
