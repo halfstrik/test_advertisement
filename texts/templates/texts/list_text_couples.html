@@ -1,9 +1,9 @@
-{% extends "index.html" %}
+{% extends "texts/base.html" %}
 
 
 {% block content %}
 {% if text_couples %}
-<table width="800" border="0">
+<table>
     <tbody>
     {% for text_couple in text_couples %}
     <tr>
@@ -19,5 +19,5 @@
 {% else %}
 <p>No text couples were created yet.</p>
 {% endif %}
-<a href="/texts/add_text_couple/">Add text couple</a>
+<a href="{% url 'texts:add_text_couple'%}">Add text couple</a>
 {% endblock %}
