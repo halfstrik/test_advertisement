@@ -1,7 +1,7 @@
 # test_advertisement
 Stripped down version of yandex.direct - advertisement platform for present text ads
 
-### Requirenments
+### Requirements
 Project is tested against:
 * Python==3.4.2
 * Django==1.7.4

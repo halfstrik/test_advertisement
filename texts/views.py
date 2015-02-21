@@ -6,7 +6,6 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.defaults import permission_denied
 
-from test_advertisement.settings import LOGIN_URL
 from texts.models import TextCouple
 from texts.forms import TextCoupleForm
 
@@ -34,7 +33,8 @@ def record_text_couple_in_db(form, user):
 @login_required
 def list_text_couples(request):
     text_couples = TextCouple.objects.filter(user=request.user)
-    html = get_template('texts/list_text_couples.html').render(RequestContext(request, {'text_couples': text_couples, }))
+    html = get_template('texts/list_text_couples.html').render(
+        RequestContext(request, {'text_couples': text_couples, }))
     return HttpResponse(html)
 
 
