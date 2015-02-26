@@ -11,6 +11,4 @@ urlpatterns = patterns('',
                            name='del_text_couple'),
                        url(r'^change_text_couple/(?P<text_couple_id>\d+)/$', 'texts.views.change_text_couple',
                            name='change_text_couple'),
-                       url(r'^send_to_moderation/(?P<text_couple_id>\d+)/$', 'texts.views.send_to_moderation',
-                           name='send_to_moderation'),
                        ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

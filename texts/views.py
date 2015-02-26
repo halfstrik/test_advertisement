@@ -9,7 +9,6 @@ from django.views.defaults import permission_denied
 
 from texts.models import TextCouple
 from texts.forms import TextCoupleForm
-from moderation.models import RequestForModeration
 
 
 @login_required
@@ -74,23 +73,7 @@ def change_text_couple(request, text_couple_id):
             text_couple.long = long_text
             text_couple.save()
             return HttpResponseRedirect(reverse('texts:list_text_couples'))
-    url_send_to_moderation = reverse('texts:send_to_moderation', args=[text_couple_id])
+    url_send_to_moderation = reverse('moderation:send_to_moderation', args=[text_couple_id, 'texts', 'TextCouple'])
     return render(request, 'texts/change_text_couple.html', {'form': form, 'text_couple': text_couple,
                                                              'send_to_moderation': url_send_to_moderation})
 
-
-@login_required
-def send_to_moderation(request, text_couple_id):
-    text_couple = get_object_or_404(TextCouple, pk=text_couple_id)
-    if text_couple.user != request.user:
-        return permission_denied(request)
-    if request.method == 'POST':
-        text_couples = RequestForModeration.objects.filter(advertising=TextCouple.objects.get(id=text_couple_id),
-                                                           status='Approval pending').count()
-        if text_couples == 0:
-            send_request = RequestForModeration(status='Approval pending', advertising=text_couple)
-            send_request.save()
-            return HttpResponseRedirect(reverse('texts:list_text_couples'))
-        else:
-            return HttpResponse('Request for this text couple already exists')
-    return render(request, 'texts/../moderation/templates/moderation/send_to_moderation.html', {'text_couple': text_couple})

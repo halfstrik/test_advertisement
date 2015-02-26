@@ -7,8 +7,6 @@ from django.views.defaults import permission_denied
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 
-from texts.models import TextCouple
-from moderation.models import TextCoupleCopy
 from moderation.models import RequestForModeration
 
 
@@ -27,14 +25,10 @@ def send_to_moderation(request, advertising_id, advertising_app, advertising_mod
     if advertising.user != request.user:
         return permission_denied(request)
     if request.method == 'POST':
-        if advertising_class == TextCouple:
-            if TextCoupleCopy.objects.filter(short=advertising.short, long=advertising.long,
-                                             parent_text_couple=advertising, user=advertising.user).count() == 0:
-                advertising_copy = TextCoupleCopy.objects.create_copy(advertising)
-                request_for_moderation = RequestForModeration(content_object=advertising_copy,
-                                                              status='Approval pending')
-                request_for_moderation.save()
-                return HttpResponseRedirect(reverse('texts:list_text_couples'))
-            else:
-                return HttpResponse('Request for this text couple already exists')
+        copy = advertising.create_copy()
+        if not copy:
+            return HttpResponse('Request for this text couple already exists')
+        request_for_moderation = RequestForModeration(content_object=copy, status='Approval pending')
+        request_for_moderation.save()
+        return HttpResponseRedirect(reverse('texts:list_text_couples'))
     return render(request, 'moderation/send_to_moderation.html', {'text_couple': advertising})

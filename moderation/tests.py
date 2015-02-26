@@ -43,7 +43,7 @@ class ModerationViewTests(TestCase):
         response = client.post(reverse('moderation:send_to_moderation', args=[text_id, 'texts', 'TextCouple']))
         self.assertTrue(response.url.endswith(reverse('texts:list_text_couples')))
         self.assertTrue(RequestForModeration.objects.filter(object_id=TextCoupleCopy.objects.filter(
-            parent_text_couple=TextCouple.objects.filter(id=text_id))))
+            parent=TextCouple.objects.filter(id=text_id))))
         self.assertNotContains(response, 'Request for this text couple already exists', status_code=302)
         self.assertTrue(response.url.endswith(reverse('texts:list_text_couples')))
 
@@ -54,7 +54,7 @@ class ModerationViewTests(TestCase):
         new_response = new_client.post(reverse('moderation:send_to_moderation', args=[text_id, 'texts', 'TextCouple']))
         self.assertEqual(new_response.status_code, 403)
         self.assertFalse(RequestForModeration.objects.filter(object_id=TextCoupleCopy.objects.filter(
-            parent_text_couple=TextCouple.objects.filter(id=text_id))))
+            parent=TextCouple.objects.filter(id=text_id))))
 
     def test_view_send_to_moderation_http_post_send_exists_request(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
