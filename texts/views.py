@@ -93,4 +93,4 @@ def send_to_moderation(request, text_couple_id):
             return HttpResponseRedirect(reverse('texts:list_text_couples'))
         else:
             return HttpResponse('Request for this text couple already exists')
-    return render(request, 'texts/send_to_moderation.html', {'text_couple': text_couple})
+    return render(request, 'texts/../moderation/templates/moderation/send_to_moderation.html', {'text_couple': text_couple})

@@ -347,57 +347,9 @@ class ViewTests(TestCase):
         client, user = get_client_and_user_of_create_random_user_and_login()
         text_id, short, long = create_valid_random_text_couple(user)
         response = client.get(reverse('texts:view_text_couple', args=[text_id]))
-        self.assertContains(response, '<a href="%s">Send to moderation</a>' % reverse('texts:send_to_moderation',
-                                                                                      args=[text_id]))
-
-    def test_send_to_moderation_http_get_anonymous_user(self):
-        text_id = random.randint(1, 100)
-        response = Client().get(reverse('texts:send_to_moderation', args=[text_id]))
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.url.endswith(LOGIN_URL + '?next=' +
-                                              reverse('texts:send_to_moderation', args=[text_id])))
-
-    def test_send_to_moderation_http_post_anonymous_user(self):
-        text_id = random.randint(1, 100)
-        response = Client().post(reverse('texts:send_to_moderation', args=[text_id]))
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.url.endswith(LOGIN_URL + '?next=' +
-                                              reverse('texts:send_to_moderation', args=[text_id])))
-
-    def test_send_to_moderation_http_get(self):
-        client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        response = client.get(reverse('texts:send_to_moderation', args=[text_id]))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'form')
-        self.assertContains(response, 'csrfmiddlewaretoken')
-        self.assertContains(response, '<input type="submit" value="OK">')
-        self.assertContains(response, 'Send a request to moderation for advertising %s'
-                            % TextCouple.objects.get(id=text_id))
-
-    def test_send_to_moderation_http_post(self):
-        client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        response = client.post(reverse('texts:send_to_moderation', args=[text_id]))
-        self.assertTrue(response.url.endswith(reverse('texts:list_text_couples')))
-        self.assertTrue(RequestForModeration.objects.filter(advertising=TextCouple.objects.get(id=text_id)))
-        self.assertNotContains(response, 'Request for this text couple already exists', status_code=302)
-        self.assertTrue(response.url.endswith(reverse('texts:list_text_couples')))
-
-    def test_send_to_moderation_http_post_send_request_other_user(self):
-        client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        new_client, new_user = get_client_and_user_of_create_random_user_and_login()
-        new_response = new_client.post(reverse('texts:send_to_moderation', args=[text_id]))
-        self.assertEqual(new_response.status_code, 403)
-        self.assertFalse(RequestForModeration.objects.filter(advertising=TextCouple.objects.get(id=text_id)))
-
-    def test_send_to_moderation_http_post_send_exists_request_(self):
-        client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        client.post(reverse('texts:send_to_moderation', args=[text_id]))
-        response = client.post(reverse('texts:send_to_moderation', args=[text_id]))
-        self.assertContains(response, 'Request for this text couple already exists')
+        self.assertContains(response, '<a href="%s">Send to moderation</a>' % reverse('moderation:send_to_moderation',
+                                                                                      args=[text_id, 'texts',
+                                                                                            'TextCouple']))
 
 
 class FormTests(TestCase):
