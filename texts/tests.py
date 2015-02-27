@@ -5,9 +5,8 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 
 from texts.forms import TextCoupleForm
-from texts.models import TextCouple
+from texts.models import TextCouple, TextCoupleCopy
 from test_advertisement.settings import LOGIN_URL
-from moderation.models import RequestForModeration
 
 
 class TextCoupleTests(TestCase):
@@ -15,6 +14,24 @@ class TextCoupleTests(TestCase):
         short, long = create_two_random_text()
         text_couple = TextCouple(short=short, long=long)
         self.assertEquals('%s (%s...)' % (short, long[:7]), str(text_couple))
+
+    def test_create_copy(self):
+        client, user = get_client_and_user_of_create_random_user_and_login()
+        short, long = create_two_random_text()
+        text_couple = TextCouple(short=short, long=long, user=user)
+        text_couple.save()
+        text_couple.create_copy()
+        self.assertTrue(TextCoupleCopy.objects.filter(short=text_couple.short, long=text_couple.long,
+                                                      parent=text_couple))
+
+    def test_create_copy_repeatedly(self):
+        client, user = get_client_and_user_of_create_random_user_and_login()
+        short, long = create_two_random_text()
+        text_couple = TextCouple(short=short, long=long, user=user)
+        text_couple.save()
+        text_couple.create_copy()
+        copy = text_couple.create_copy()
+        self.assertEquals(copy, None)
 
 
 def create_two_random_text():

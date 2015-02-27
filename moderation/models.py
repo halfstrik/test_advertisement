@@ -16,18 +16,3 @@ class RequestForModeration(models.Model):
     date_of_last_moderation = models.DateTimeField(auto_now=True)
     message_from_moderator = models.TextField(null=True)
     status = models.CharField(max_length=16, choices=STATUSES)
-
-
-class Advertising(models.Model):
-    user = models.ForeignKey(User)
-    parent = models.PositiveIntegerField()
-
-    class Meta:
-        abstract = True
-
-
-class TextCoupleCopy(Advertising):
-    short = models.CharField(max_length=30)
-    long = models.CharField(max_length=140)
-
-

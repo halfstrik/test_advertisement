@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, HttpResponseRedirect
 
 from django.shortcuts import get_object_or_404, render
 from django.template import RequestContext
@@ -76,4 +76,3 @@ def change_text_couple(request, text_couple_id):
     url_send_to_moderation = reverse('moderation:send_to_moderation', args=[text_couple_id, 'texts', 'TextCouple'])
     return render(request, 'texts/change_text_couple.html', {'form': form, 'text_couple': text_couple,
                                                              'send_to_moderation': url_send_to_moderation})
-

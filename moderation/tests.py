@@ -3,9 +3,9 @@ import random
 from django.core.urlresolvers import reverse
 from django.test import TestCase, Client
 
-from texts.models import TextCouple
+from texts.models import TextCouple, TextCoupleCopy
 from test_advertisement.settings import LOGIN_URL
-from moderation.models import RequestForModeration, TextCoupleCopy
+from moderation.models import RequestForModeration
 from texts.tests import create_valid_random_text_couple, get_client_and_user_of_create_random_user_and_login
 
 
