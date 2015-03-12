@@ -30,8 +30,9 @@ class TextCoupleTests(TestCase):
         text_couple = TextCouple(short=short, long=long, user=user)
         text_couple.save()
         text_couple.create_copy()
-        copy = text_couple.create_copy()
-        self.assertEquals(copy, None)
+        text_couple.create_copy()
+        count = TextCoupleCopy.objects.filter(short=short, long=long, user=user).count()
+        self.assertEquals(count, 1)
 
 
 def create_two_random_text():
@@ -43,8 +44,8 @@ def create_two_random_text():
 def create_valid_random_text_couple(user):
     text_id = random.randint(1, 100)
     short, long = create_two_random_text()
-    TextCouple.objects.create(id=text_id, short=short, long=long, user=user)
-    return text_id, short, long
+    text_couple = TextCouple.objects.create(id=text_id, short=short, long=long, user=user)
+    return text_couple
 
 
 def get_client_and_user_of_create_random_user_and_login():
@@ -71,8 +72,7 @@ class ViewTests(TestCase):
 
     def test_add_text_couple_http_post_full_form(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        response = client.post(reverse('texts:add_text_couple'), {'short': 'short',
-                                                                  'long': 'long'})
+        response = client.post(reverse('texts:add_text_couple'), {'short': 'short', 'long': 'long'})
         self.assertEqual(response.status_code, 302)
         self.assertTrue(TextCouple.objects.filter(short='short',
                                                   long='long',
@@ -121,11 +121,11 @@ class ViewTests(TestCase):
 
     def test_list_text_couples_http_get_with_one_text_couple_random_text(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
+        text_couple = create_valid_random_text_couple(user)
         response = client.get(reverse('texts:list_text_couples'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, short)
-        self.assertContains(response, long)
+        self.assertContains(response, text_couple.short)
+        self.assertContains(response, text_couple.long)
 
     def test_list_text_couples_http_get_with_no_text_couples_not_contains_table(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
@@ -141,31 +141,31 @@ class ViewTests(TestCase):
 
     def test_list_text_couples_http_get_must_contain_link_to_separate_text_couples(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
+        text_couple = create_valid_random_text_couple(user)
         response = client.get(reverse('texts:list_text_couples'))
-        self.assertContains(response, '<a href="%s">%s %s</a>' % (reverse('texts:view_text_couple',
-                                                                          args=[text_id]), short, long))
+        self.assertContains(response, '<a href="%s">Editing</a>' % (reverse('texts:view_text_couple',
+                                                                            args=[text_couple.id])))
 
     def test_list_text_couples_http_get_text_couple_other_user(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
+        text_couple = create_valid_random_text_couple(user)
         client, user = get_client_and_user_of_create_random_user_and_login()
         response = client.get(reverse('texts:list_text_couples'))
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, short)
-        self.assertNotContains(response, long)
+        self.assertNotContains(response, text_couple.short)
+        self.assertNotContains(response, text_couple.long)
 
     def test_list_text_couples_http_get_text_couples_different_user(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
+        text_couple = create_valid_random_text_couple(user)
         client, new_user = get_client_and_user_of_create_random_user_and_login()
-        new_text_id, new_short, new_long = create_valid_random_text_couple(new_user)
+        new_text_couple = create_valid_random_text_couple(new_user)
         response = client.get(reverse('texts:list_text_couples'))
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, short)
-        self.assertNotContains(response, long)
-        self.assertContains(response, new_short)
-        self.assertContains(response, new_long)
+        self.assertNotContains(response, text_couple.short)
+        self.assertNotContains(response, text_couple.long)
+        self.assertContains(response, new_text_couple.short)
+        self.assertContains(response, new_text_couple.long)
 
     def test_text_couple_http_get_anonymous_user_text_couples_does_not_exist(self):
         text_id = random.randint(1, 100)
@@ -175,38 +175,39 @@ class ViewTests(TestCase):
 
     def test_text_couple_http_get_anonymous_user(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        response = Client().get(reverse('texts:view_text_couple', args=[text_id]))
+        text_couple = create_valid_random_text_couple(user)
+        response = Client().get(reverse('texts:view_text_couple', args=[text_couple.id]))
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.url.endswith(LOGIN_URL + '?next=' + reverse('texts:view_text_couple', args=[text_id])))
+        self.assertTrue(response.url.endswith(LOGIN_URL + '?next=' + reverse('texts:view_text_couple',
+                                                                             args=[text_couple.id])))
 
     def test_text_couple_http_get(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        response = client.get(reverse('texts:view_text_couple', args=[text_id]))
-        self.assertContains(response, '%s %s' % (short, long))
+        text_couple = create_valid_random_text_couple(user)
+        response = client.get(reverse('texts:view_text_couple', args=[text_couple.id]))
+        self.assertContains(response, '%s %s' % (text_couple.short, text_couple.long))
 
     def test_text_couple_http_get_must_contain_link_to_change_text_couple(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        response = client.get(reverse('texts:view_text_couple', args=[text_id]))
+        text_couple = create_valid_random_text_couple(user)
+        response = client.get(reverse('texts:view_text_couple', args=[text_couple.id]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<a href="%s">Change text couple</a>' % reverse('texts:change_text_couple',
-                                                                                      args=[text_id]))
+                                                                                      args=[text_couple.id]))
 
     def test_text_couple_http_get_must_contain_link_to_delete_text_couple(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        response = client.get(reverse('texts:view_text_couple', args=[text_id]))
+        text_couple = create_valid_random_text_couple(user)
+        response = client.get(reverse('texts:view_text_couple', args=[text_couple.id]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '<a href="%s">Delete text couple</a>' % reverse('texts:del_text_couple',
-                                                                                      args=[text_id]))
+                                                                                      args=[text_couple.id]))
 
     def test_text_couple_http_get_text_couple_other_user(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
+        text_couple = create_valid_random_text_couple(user)
         new_client, new_user = get_client_and_user_of_create_random_user_and_login()
-        response = new_client.get(reverse('texts:view_text_couple', args=[text_id]))
+        response = new_client.get(reverse('texts:view_text_couple', args=[text_couple.id]))
         self.assertEqual(response.status_code, 403)
 
     def test_text_couple_http_get_text_couple_does_not_exist(self):
@@ -229,30 +230,30 @@ class ViewTests(TestCase):
 
     def test_del_text_couple_http_post_anonymous_user_not_delete(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        Client().post(reverse('texts:del_text_couple', args=[text_id]))
-        self.assertTrue(TextCouple.objects.filter(id=text_id).exists())
+        text_couple = create_valid_random_text_couple(user)
+        Client().post(reverse('texts:del_text_couple', args=[text_couple.id]))
+        self.assertTrue(TextCouple.objects.filter(id=text_couple.id).exists())
 
     def test_del_text_couple_http_get(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        response = client.get(reverse('texts:del_text_couple', args=[text_id]))
+        text_couple = create_valid_random_text_couple(user)
+        response = client.get(reverse('texts:del_text_couple', args=[text_couple.id]))
         self.assertContains(response, 'csrfmiddlewaretoken')
         self.assertContains(response, '<input type="submit" value="Delete">')
-        self.assertContains(response, short)
+        self.assertContains(response, text_couple.short)
 
     def test_del_text_couple_http_post(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        client.post(reverse('texts:del_text_couple', args=[text_id]))
-        self.assertFalse(TextCouple.objects.filter(short=short,
-                                                   long=long,
+        text_couple = create_valid_random_text_couple(user)
+        client.post(reverse('texts:del_text_couple', args=[text_couple.id]))
+        self.assertFalse(TextCouple.objects.filter(short=text_couple.short,
+                                                   long=text_couple.long,
                                                    user_id=user.id).exists())
 
     def test_del_text_couple_http_post_redirect_to_list_text_couple(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        response = client.post(reverse('texts:del_text_couple', args=[text_id]))
+        text_couple = create_valid_random_text_couple(user)
+        response = client.post(reverse('texts:del_text_couple', args=[text_couple.id]))
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.endswith(reverse('texts:list_text_couples')))
 
@@ -264,12 +265,12 @@ class ViewTests(TestCase):
 
     def test_del_text_couple_http_post_delete_text_couple_other_user(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
+        text_couple = create_valid_random_text_couple(user)
         new_client, new_user = get_client_and_user_of_create_random_user_and_login()
-        new_response = new_client.post(reverse('texts:del_text_couple', args=[text_id]))
+        new_response = new_client.post(reverse('texts:del_text_couple', args=[text_couple.id]))
         response = client.get(reverse('texts:list_text_couples'))
-        self.assertContains(response, short)
-        self.assertContains(response, long)
+        self.assertContains(response, text_couple.short)
+        self.assertContains(response, text_couple.long)
         self.assertEqual(new_response.status_code, 403)
 
     def test_change_text_couple_http_get_anonymous_user(self):
@@ -290,13 +291,13 @@ class ViewTests(TestCase):
 
     def test_change_text_couple_http_post(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
+        text_couple = create_valid_random_text_couple(user)
         change_long, change_short = create_two_random_text()
-        client.post(reverse('texts:change_text_couple', args=[text_id]),
+        client.post(reverse('texts:change_text_couple', args=[text_couple.id]),
                     {'short': change_short,
                      'long': change_long})
-        self.assertFalse(TextCouple.objects.filter(short=short,
-                                                   long=long,
+        self.assertFalse(TextCouple.objects.filter(short=text_couple.short,
+                                                   long=text_couple.long,
                                                    user_id=user.id).exists())
         self.assertTrue(TextCouple.objects.filter(short=change_short,
                                                   long=change_long,
@@ -310,9 +311,9 @@ class ViewTests(TestCase):
 
     def test_change_text_couple_http_post_redirect_to_view_text_couple(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
+        text_couple = create_valid_random_text_couple(user)
         change_short, change_long = create_two_random_text()
-        response = client.post(reverse('texts:change_text_couple', args=[text_id]),
+        response = client.post(reverse('texts:change_text_couple', args=[text_couple.id]),
                                {'short': change_short,
                                 'long': change_long})
         self.assertEqual(response.status_code, 302)
@@ -320,41 +321,41 @@ class ViewTests(TestCase):
 
     def test_change_text_couple_http_post_anonymous_user_change_text_couple_other_user(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
+        text_couple = create_valid_random_text_couple(user)
         change_short, change_long = create_two_random_text()
-        Client().post(reverse('texts:change_text_couple', args=[text_id]),
+        Client().post(reverse('texts:change_text_couple', args=[text_couple.id]),
                       {'short': change_short,
                       'long': change_long})
-        self.assertTrue(TextCouple.objects.filter(short=short,
-                                                  long=long).exists())
+        self.assertTrue(TextCouple.objects.filter(short=text_couple.short,
+                                                  long=text_couple.long).exists())
 
     def test_change_text_couple_http_get(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        response = client.get(reverse('texts:change_text_couple', args=[text_id]))
+        text_couple = create_valid_random_text_couple(user)
+        response = client.get(reverse('texts:change_text_couple', args=[text_couple.id]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'form')
         self.assertContains(response, 'csrfmiddlewaretoken')
         self.assertContains(response, TextCoupleForm().as_table())
-        self.assertContains(response, 'Make edition for %s' % short)
+        self.assertContains(response, 'Make edition for %s' % text_couple.short)
 
     def test_change_text_couple_http_post_empty_form(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        response = client.post(reverse('texts:change_text_couple', args=[text_id]))
+        text_couple = create_valid_random_text_couple(user)
+        response = client.post(reverse('texts:change_text_couple', args=[text_couple.id]))
         self.assertContains(response, 'This field is required')
 
     def test_change_text_couple_http_post_change_text_couple_other_user(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
+        text_couple = create_valid_random_text_couple(user)
         change_short, change_long = create_two_random_text()
         new_client, new_user = get_client_and_user_of_create_random_user_and_login()
-        new_response = new_client.post(reverse('texts:change_text_couple', args=[text_id]),
+        new_response = new_client.post(reverse('texts:change_text_couple', args=[text_couple.id]),
                                        {'short': change_short,
                                         'long': change_long})
         self.assertEqual(new_response.status_code, 403)
-        self.assertTrue(TextCouple.objects.filter(short=short,
-                                                  long=long,
+        self.assertTrue(TextCouple.objects.filter(short=text_couple.short,
+                                                  long=text_couple.long,
                                                   user_id=user.id).exists())
         self.assertFalse(TextCouple.objects.filter(short=change_short,
                                                    long=change_long,
@@ -362,11 +363,11 @@ class ViewTests(TestCase):
 
     def test_view_text_couple_http_get_must_offer_link_request_for_moderation(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
-        text_id, short, long = create_valid_random_text_couple(user)
-        response = client.get(reverse('texts:view_text_couple', args=[text_id]))
+        text_couple = create_valid_random_text_couple(user)
+        response = client.get(reverse('texts:view_text_couple', args=[text_couple.id]))
         self.assertContains(response, '<a href="%s">Send to moderation</a>' % reverse('moderation:send_to_moderation',
-                                                                                      args=[text_id, 'texts',
-                                                                                            'TextCouple']))
+                                                                                      args=[text_couple.id,
+                                                                                            'texts', 'TextCouple']))
 
 
 class FormTests(TestCase):

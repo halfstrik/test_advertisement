@@ -6,8 +6,9 @@ from django.template.loader import get_template
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.defaults import permission_denied
+from django.db.models.fields import NullBooleanField
 
-from texts.models import TextCouple
+from texts.models import TextCouple, TextCoupleCopy
 from texts.forms import TextCoupleForm
 
 
@@ -53,6 +54,12 @@ def delete_text_couple(request, text_couple_id):
     if text_couple.user != request.user:
         return permission_denied(request)
     if request.method == 'POST':
+        list_text_couples_copy = TextCoupleCopy.objects.filter(parent=text_couple)
+        for text_couple_copy in list_text_couples_copy:
+            text_couple_copy.parent = None
+            text_couple_copy.message_from_moderator = 'The original has been deleted'
+            text_couple_copy.save()
+            text_couple_copy.canceled_request_for_moderation()
         text_couple.delete()
         return HttpResponseRedirect(reverse('texts:list_text_couples'))
     return render(request, 'texts/delete_text_couple.html', {'text_couple': text_couple})
@@ -72,6 +79,9 @@ def change_text_couple(request, text_couple_id):
             text_couple.short = short_text
             text_couple.long = long_text
             text_couple.save()
+            list_text_couples_copy = TextCoupleCopy.objects.filter(parent=text_couple)
+            for text_couple_copy in list_text_couples_copy:
+                text_couple_copy.canceled_request_for_moderation()
             return HttpResponseRedirect(reverse('texts:list_text_couples'))
     url_send_to_moderation = reverse('moderation:send_to_moderation', args=[text_couple_id, 'texts', 'TextCouple'])
     return render(request, 'texts/change_text_couple.html', {'form': form, 'text_couple': text_couple,

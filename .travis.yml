@@ -3,5 +3,6 @@ python:
   - "3.4"
 install:
   - pip install django==1.7.4
+  - pip install pytz
 
 script: python manage.py test
