@@ -14,9 +14,6 @@ from moderation.models import RequestForModeration
 from moderation.forms import ModerationForm
 
 
-STATUSES = ((0, u'Approval pending'), (1, u'Accepted'), (2, u'Denied'), (3, u'Canceled'), (4, u'Is moderated'))
-
-
 @login_required
 def send_to_moderation(request, advertising_id, advertising_app, advertising_model):
     try:
@@ -31,7 +28,7 @@ def send_to_moderation(request, advertising_id, advertising_app, advertising_mod
         copy = advertising.create_copy()
         if not copy:
             return HttpResponse('Request for this text couple already exists')
-        request_for_moderation = RequestForModeration(content_object=copy, status=STATUSES[0][1])
+        request_for_moderation = RequestForModeration(content_object=copy, status=RequestForModeration.APPROVAL_PENDING)
         request_for_moderation.save()
         return HttpResponseRedirect(reverse('texts:list_text_couples'))
     return render(request, 'moderation/send_to_moderation.html', {'text_couple': advertising})
@@ -44,8 +41,9 @@ def list_request_for_moderation(request):
     except ObjectDoesNotExist:
         group = None
     if group == 'moderator':
-        list_request_for_moderation_moderator = RequestForModeration.objects.filter(Q(status='Approval pending') | Q(
-            status='Is moderated')).order_by('date_of_last_moderation')
+        list_request_for_moderation_moderator = RequestForModeration.objects.filter(Q(status=RequestForModeration.
+                                                                                      APPROVAL_PENDING) | Q(
+            status=RequestForModeration.IS_MODERATED)).order_by('date_of_last_moderation')
         context = RequestContext(request,
                                  {"list_request_for_moderation_moderator": list_request_for_moderation_moderator})
         html = get_template('moderation/list_request_for_moderation.html').render(context)
@@ -71,18 +69,24 @@ def moderation(request, request_for_moderation_id):
     if group != 'moderator':
         return HttpResponse("You are not moderator")
     request_for_moderation = get_object_or_404(RequestForModeration, id=request_for_moderation_id)
-    if (request_for_moderation.status == STATUSES[1][1]) | (request_for_moderation.status == STATUSES[2][1]):
+    if (request_for_moderation.status == RequestForModeration.ACCEPTED) | \
+            (request_for_moderation.status == RequestForModeration.DENIED):
         return HttpResponse('This request has already moderated')
-    if request_for_moderation.status == STATUSES[3][1]:
+    if request_for_moderation.status == RequestForModeration.CANCELED:
         return HttpResponse('This request has canceled')
     form = ModerationForm()
-    request_for_moderation.status = STATUSES[4][1]
+    request_for_moderation.status = RequestForModeration.IS_MODERATED
     request_for_moderation.moderator = request.user
     request_for_moderation.save()
     if request.method == 'POST':
         form = ModerationForm(request.POST)
         if form.is_valid():
-            request_for_moderation.status = form.cleaned_data['status']
+            status = ''
+            if form.cleaned_data['status'] == RequestForModeration.DENIED:
+                status = RequestForModeration.DENIED
+            elif form.cleaned_data['status'] == RequestForModeration.ACCEPTED:
+                status = RequestForModeration.ACCEPTED
+            request_for_moderation.status = status
             request_for_moderation.message_from_moderator = form.cleaned_data['message_from_moderator']
             request_for_moderation.moderator = request.user
             request_for_moderation.save()

@@ -10,9 +10,6 @@ from moderation.models import RequestForModeration
 from texts.tests import create_valid_random_text_couple, get_client_and_user_of_create_random_user_and_login
 from moderation.forms import ModerationForm
 
-STATUSES = ((0, u'Approval pending'), (1, u'Accepted'), (2, u'Denied'),
-            (3, u'Canceled'), (4, u'Is moderated'))
-
 
 def create_group(group_name):
     group = Group(name=group_name)
@@ -116,7 +113,7 @@ class ModerationViewTests(TestCase):
         datetime = request.date_of_last_moderation
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, text_couple.short)
-        self.assertContains(response, STATUSES[0][1])
+        self.assertContains(response, RequestForModeration.APPROVAL_PENDING)
         self.assertContains(response, datetime.strftime("%d %b %Y %H:%M:%S"))
 
     def test_view_list_request_for_moderation_http_get_moderator(self):
@@ -133,12 +130,12 @@ class ModerationViewTests(TestCase):
         response = client_moderator.get(reverse('moderation:list_request_for_moderation'))
         datetime = request.date_of_last_moderation
         self.assertContains(response, text_couple.short)
-        self.assertNotContains(response, STATUSES[0][1])
+        self.assertNotContains(response, RequestForModeration.APPROVAL_PENDING)
         self.assertContains(response, datetime.strftime("%d %b %Y %H:%M:%S"))
 
     def test_view_list_request_for_moderation_http_get_visible_accepted(self):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
-        request.status = STATUSES[1][1]
+        request.status = RequestForModeration.ACCEPTED
         request.save()
         response = client.get(reverse('moderation:list_request_for_moderation'))
         response_moderator = client_moderator.get(reverse('moderation:list_request_for_moderation'))
@@ -147,7 +144,7 @@ class ModerationViewTests(TestCase):
 
     def test_view_list_request_for_moderation_http_get_visible_denied(self):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
-        request.status = STATUSES[2][1]
+        request.status = RequestForModeration.DENIED
         request.save()
         response = client.get(reverse('moderation:list_request_for_moderation'))
         response_moderator = client_moderator.get(reverse('moderation:list_request_for_moderation'))
@@ -156,7 +153,7 @@ class ModerationViewTests(TestCase):
 
     def test_view_list_request_for_moderation_http_get_canceled(self):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
-        request.status = STATUSES[3][1]
+        request.status = RequestForModeration.CANCELED
         request.save()
         response = client.get(reverse('moderation:list_request_for_moderation'))
         response_moderator = client_moderator.get(reverse('moderation:list_request_for_moderation'))
@@ -187,51 +184,52 @@ class ModerationViewTests(TestCase):
         self.assertContains(response, 'form')
         self.assertContains(response, 'csrfmiddlewaretoken')
         self.assertContains(response, '<input type="submit" value="OK">')
-        self.assertTrue(RequestForModeration.objects.filter(id=request.id, status=STATUSES[4][1]).exists())
+        self.assertTrue(RequestForModeration.objects.filter(id=request.id, status=RequestForModeration.IS_MODERATED)
+                        .exists())
 
     def test_view_moderation_http_post(self):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
         message = ''.join(random.sample('qwertyuiop', 10))
-        response = client_moderator.post(reverse('moderation:moderation', args=[request.id]), {'status': STATUSES[2][1],
-                                                                                               'message_from_moderator':
-                                                                                                   message})
+        response = client_moderator.post(reverse('moderation:moderation', args=[request.id]),
+                                         {'status': RequestForModeration.DENIED, 'message_from_moderator': message})
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.endswith(reverse('moderation:list_request_for_moderation')))
-        self.assertTrue(RequestForModeration.objects.filter(id=request.id, status=STATUSES[2][1],
+        self.assertTrue(RequestForModeration.objects.filter(id=request.id, status=RequestForModeration.DENIED,
                                                             message_from_moderator=message).exists())
 
     def test_view_moderation_http_post_message_from_moderator_blank(self):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
-        client_moderator.post(reverse('moderation:moderation', args=[request.id]), {'status': STATUSES[2][1],
-                                                                                    'message_from_moderator': ""})
-        self.assertFalse(RequestForModeration.objects.filter(id=request.id, status=STATUSES[2][1]).exists())
+        client_moderator.post(reverse('moderation:moderation', args=[request.id]),
+                              {'status': RequestForModeration.DENIED, 'message_from_moderator': ""})
+        self.assertFalse(RequestForModeration.objects.filter(id=request.id, status=RequestForModeration.DENIED)
+                         .exists())
 
 
 class FormTests(TestCase):
     def test_ModerationForm_with_status_accepted(self):
-        self.assertTrue(ModerationForm({'status': 'Accepted',
+        self.assertTrue(ModerationForm({'status': RequestForModeration.ACCEPTED,
                                         'message_from_moderator': 'test'}).is_valid())
 
     def test_ModerationForm_with_status_denied(self):
-        self.assertTrue(ModerationForm({'status': 'Denied',
+        self.assertTrue(ModerationForm({'status': RequestForModeration.DENIED,
                                         'message_from_moderator': 'test'}).is_valid())
 
     def test_ModerationForm_with_status_incorrect(self):
-        self.assertFalse(ModerationForm({'status': 'Canceled',
+        self.assertFalse(ModerationForm({'status': RequestForModeration.CANCELED,
                                         'message_from_moderator': 'test'}).is_valid())
 
     def test_ModerationForm_with_status_accepted_message_blank(self):
-        self.assertTrue(ModerationForm({'status': 'Accepted',
+        self.assertTrue(ModerationForm({'status': RequestForModeration.ACCEPTED,
                                         'message_from_moderator': ''}).is_valid())
 
     def test_ModerationForm_with_status_denied_message_blank(self):
-        self.assertFalse(ModerationForm({'status': 'Denied',
+        self.assertFalse(ModerationForm({'status': RequestForModeration.DENIED,
                                         'message_from_moderator': ''}).is_valid())
 
     def test_ModerationForm_with_status_denied_message_len_equals_500(self):
-        self.assertTrue(ModerationForm({'status': 'Denied',
+        self.assertTrue(ModerationForm({'status': RequestForModeration.DENIED,
                                         'message_from_moderator': 'qwertyuiop'*50}).is_valid())
 
     def test_ModerationForm_with_status_denied_message_len_equals_501(self):
-        self.assertFalse(ModerationForm({'status': 'Denied',
+        self.assertFalse(ModerationForm({'status': RequestForModeration.DENIED,
                                         'message_from_moderator': 'qwertyuiop'*50 + "a"}).is_valid())
