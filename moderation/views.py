@@ -72,20 +72,23 @@ def moderation(user, request_for_moderation, form):
         request_for_moderation.save()
 
 
+class ErrorModeration(Exception):
+    def __init__(self):
+        pass
+
+
 def begin_moderation(user, request_for_moderation):
-    message = ''
     if (request_for_moderation.status == RequestForModeration.ACCEPTED) | \
             (request_for_moderation.status == RequestForModeration.DENIED):
-        message = 'This request already moderated'
+        raise ErrorModeration
     if request_for_moderation.status == RequestForModeration.CANCELED:
-        message = 'This request has canceled'
+        raise ErrorModeration
     if (request_for_moderation.status == RequestForModeration.IS_MODERATED) and \
             (request_for_moderation.moderator != user):
-        message = 'This request has already moderated'
+        raise ErrorModeration
     request_for_moderation.status = RequestForModeration.IS_MODERATED
     request_for_moderation.moderator = user
     request_for_moderation.save()
-    return message
 
 
 def is_user_in_moderator_group(user):
@@ -95,9 +98,10 @@ def is_user_in_moderator_group(user):
 @user_passes_test(is_user_in_moderator_group)
 def initiate_moderation(request, request_for_moderation_id):
     request_for_moderation = get_object_or_404(RequestForModeration, id=request_for_moderation_id)
-    message = begin_moderation(request.user, request_for_moderation)
-    if message:
-        HttpResponse(message)
+    try:
+        begin_moderation(request.user, request_for_moderation)
+    except ErrorModeration:
+        return HttpResponse('В данный момент модерация запроса невозможна')
     form = ModerationForm()
     if request.method == 'POST':
         form = ModerationForm(request.POST)
