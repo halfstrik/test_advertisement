@@ -60,7 +60,7 @@ def list_request_for_moderation(request):
         return HttpResponse(html)
 
 
-def moderation(request, request_for_moderation, form):
+def moderation(user, request_for_moderation, form):
         status = ''
         if form.cleaned_data['status'] == RequestForModeration.DENIED:
             status = RequestForModeration.DENIED
@@ -68,14 +68,24 @@ def moderation(request, request_for_moderation, form):
             status = RequestForModeration.ACCEPTED
         request_for_moderation.status = status
         request_for_moderation.message_from_moderator = form.cleaned_data['message_from_moderator']
-        request_for_moderation.moderator = request.user
+        request_for_moderation.moderator = user
         request_for_moderation.save()
 
 
-def begin_moderation(request, request_for_moderation):
+def begin_moderation(user, request_for_moderation):
+    message = ''
+    if (request_for_moderation.status == RequestForModeration.ACCEPTED) | \
+            (request_for_moderation.status == RequestForModeration.DENIED):
+        message = 'This request already moderated'
+    if request_for_moderation.status == RequestForModeration.CANCELED:
+        message = 'This request has canceled'
+    if (request_for_moderation.status == RequestForModeration.IS_MODERATED) and \
+            (request_for_moderation.moderator != user):
+        message = 'This request has already moderated'
     request_for_moderation.status = RequestForModeration.IS_MODERATED
-    request_for_moderation.moderator = request.user
+    request_for_moderation.moderator = user
     request_for_moderation.save()
+    return message
 
 
 def is_user_in_moderator_group(user):
@@ -83,23 +93,16 @@ def is_user_in_moderator_group(user):
 
 
 @user_passes_test(is_user_in_moderator_group)
-@login_required
 def initiate_moderation(request, request_for_moderation_id):
     request_for_moderation = get_object_or_404(RequestForModeration, id=request_for_moderation_id)
-    if (request_for_moderation.status == RequestForModeration.ACCEPTED) | \
-            (request_for_moderation.status == RequestForModeration.DENIED):
-        return HttpResponse('This request has already moderated')
-    if request_for_moderation.status == RequestForModeration.CANCELED:
-        return HttpResponse('This request has canceled')
-    if (request_for_moderation.status == RequestForModeration.IS_MODERATED) and \
-            (request_for_moderation.moderator != request.user):
-        return HttpResponse('This request has already moderated')
+    message = begin_moderation(request.user, request_for_moderation)
+    if message:
+        HttpResponse(message)
     form = ModerationForm()
-    begin_moderation(request, request_for_moderation)
     if request.method == 'POST':
         form = ModerationForm(request.POST)
         if form.is_valid():
-            moderation(request, request_for_moderation, form)
+            moderation(request.user, request_for_moderation, form)
             return HttpResponseRedirect(reverse('moderation:list_request_for_moderation'))
     return render(request, 'moderation/moderation.html', {'form': form, 'advertiser': request_for_moderation.
                   content_object.display()})
