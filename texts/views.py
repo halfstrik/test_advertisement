@@ -6,7 +6,6 @@ from django.template.loader import get_template
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.defaults import permission_denied
-from django.db.models.fields import NullBooleanField
 
 from texts.models import TextCouple, TextCoupleCopy
 from texts.forms import TextCoupleForm
