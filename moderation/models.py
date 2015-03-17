@@ -10,7 +10,7 @@ class RequestForModeration(models.Model):
     DENIED = 'DE'
     CANCELED = 'CA'
     IS_MODERATED = 'MO'
-    STATUS_CHOISES = ((APPROVAL_PENDING, u'Approval pending'), (ACCEPTED, u'Accepted'), (DENIED, u'Denied'),
+    STATUS_CHOICES = ((APPROVAL_PENDING, u'Approval pending'), (ACCEPTED, u'Accepted'), (DENIED, u'Denied'),
                       (CANCELED, u'Canceled'), (IS_MODERATED, u'Is moderated'))
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
@@ -19,4 +19,4 @@ class RequestForModeration(models.Model):
     moderator = models.ForeignKey(User, null=True, blank=True)
     date_of_last_moderation = models.DateTimeField(auto_now=True)
     message_from_moderator = models.TextField(max_length=500, null=True, blank=True)
-    status = models.CharField(max_length=16, choices=STATUS_CHOISES)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES)

@@ -13,23 +13,8 @@
                 <td>{{ request_for_moderation.content_object.short }}</td>
                 <td>{{ request_for_moderation.date_of_last_moderation|date:"d M Y G:i:s" }}</td>
                 <td>
-                    <a href="{% url 'moderation:moderation' request_for_moderation.id %}">Moderation</a>
+                    <a href="{% url 'moderation:initiate_moderation' request_for_moderation.id %}">Moderation</a>
                 </td>
-            </tr>
-        {% endfor %}
-        </table>
-    {%elif list_request_for_moderation_advertiser  %}
-        <table>
-            <tr>
-                <td>Short</td>
-                <td>Date last moderation</td>
-                <td>Status</td>
-            </tr>
-        {% for request_for_moderation in list_request_for_moderation_advertiser %}
-            <tr>
-                <td>{{ request_for_moderation.content_object.short }}</td>
-                <td>{{ request_for_moderation.date_of_last_moderation|date:"d M Y G:i:s" }}</td>
-                <td>{{ request_for_moderation.status }}</td>
             </tr>
         {% endfor %}
         </table>

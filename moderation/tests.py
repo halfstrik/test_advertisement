@@ -23,7 +23,7 @@ def create_users_request_to_moderation_and_text_couple_copy():
     client.post(reverse('moderation:send_to_moderation', args=[text_couple.id, 'texts', 'TextCouple']))
     text_couple_copy = TextCoupleCopy.objects.get(short=text_couple.short, long=text_couple.long, parent=text_couple)
     request = RequestForModeration.objects.get(object_id=text_couple_copy.id)
-    group = create_group('moderator')
+    group = create_group('Moderator')
     client_moderator, user_moderator = get_client_and_user_of_create_random_user_and_login()
     user_moderator.groups.add(group)
     return client, client_moderator, request, text_couple_copy
@@ -106,32 +106,22 @@ class ModerationViewTests(TestCase):
         client, user = get_client_and_user_of_create_random_user_and_login()
         text_couple = create_valid_random_text_couple(user)
         client.post(reverse('moderation:send_to_moderation', args=[text_couple.id, 'texts', 'TextCouple']))
-        text_couple_copy = TextCoupleCopy.objects.get(short=text_couple.short, long=text_couple.long,
-                                                      parent=text_couple)
-        request = RequestForModeration.objects.get(object_id=text_couple_copy.id)
         response = client.get(reverse('moderation:list_request_for_moderation'))
-        datetime = request.date_of_last_moderation
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, text_couple.short)
-        self.assertContains(response, RequestForModeration.APPROVAL_PENDING)
-        self.assertContains(response, datetime.strftime("%d %b %Y %H:%M:%S"))
+        self.assertContains(response, 'Approval pending')
 
     def test_view_list_request_for_moderation_http_get_moderator(self):
         client, user = get_client_and_user_of_create_random_user_and_login()
         text_couple = create_valid_random_text_couple(user)
         client.post(reverse('moderation:send_to_moderation', args=[text_couple.id, 'texts', 'TextCouple']))
-        text_couple_copy = TextCoupleCopy.objects.get(short=text_couple.short, long=text_couple.long,
-                                                      parent=text_couple)
-        request = RequestForModeration.objects.get(object_id=text_couple_copy.id)
-        group = Group(name='moderator')
+        group = Group(name='Moderator')
         group.save()
         client_moderator, user_moderator = get_client_and_user_of_create_random_user_and_login()
         user_moderator.groups.add(group)
         response = client_moderator.get(reverse('moderation:list_request_for_moderation'))
-        datetime = request.date_of_last_moderation
         self.assertContains(response, text_couple.short)
-        self.assertNotContains(response, RequestForModeration.APPROVAL_PENDING)
-        self.assertContains(response, datetime.strftime("%d %b %Y %H:%M:%S"))
+        self.assertNotContains(response, 'Approval pending')
 
     def test_view_list_request_for_moderation_http_get_visible_accepted(self):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
@@ -163,23 +153,25 @@ class ModerationViewTests(TestCase):
     def test_view_list_request_for_moderation_http_get_link_to_moderation(self):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
         response_moderator = client_moderator.get(reverse('moderation:list_request_for_moderation'))
-        self.assertContains(response_moderator, '<a href="%s">Moderation</a>' % (reverse('moderation:moderation',
-                                                                                         args=[request.id])))
+        self.assertContains(response_moderator, '<a href="%s">Moderation</a>' %
+                            (reverse('moderation:initiate_moderation', args=[request.id])))
 
     def test_view_moderation_http_get_anonymous_user(self):
         text_id = random.randint(1, 100)
-        response = Client().get(reverse('moderation:moderation', args=[text_id]))
+        response = Client().get(reverse('moderation:initiate_moderation', args=[text_id]))
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.url.endswith(LOGIN_URL + '?next=' + reverse('moderation:moderation', args=[text_id])))
+        self.assertTrue(response.url.endswith(LOGIN_URL + '?next=' +
+                                              reverse('moderation:initiate_moderation', args=[text_id])))
 
     def test_view_moderation_http_get_no_user_group(self):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
-        response = client.get(reverse('moderation:moderation', args=[text_couple_copy.parent.id]))
-        self.assertContains(response, "You are not moderator")
+        response = client.get(reverse('moderation:initiate_moderation', args=[text_couple_copy.parent.id]))
+        self.assertEqual(response.status_code, 302)
+#        self.assertTrue(response.url.endswith(reverse('admin')))
 
     def test_view_moderation_http_get(self):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
-        response = client_moderator.get(reverse('moderation:moderation', args=[request.id]))
+        response = client_moderator.get(reverse('moderation:initiate_moderation', args=[request.id]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'form')
         self.assertContains(response, 'csrfmiddlewaretoken')
@@ -190,7 +182,7 @@ class ModerationViewTests(TestCase):
     def test_view_moderation_http_post(self):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
         message = ''.join(random.sample('qwertyuiop', 10))
-        response = client_moderator.post(reverse('moderation:moderation', args=[request.id]),
+        response = client_moderator.post(reverse('moderation:initiate_moderation', args=[request.id]),
                                          {'status': RequestForModeration.DENIED, 'message_from_moderator': message})
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.endswith(reverse('moderation:list_request_for_moderation')))
@@ -199,7 +191,7 @@ class ModerationViewTests(TestCase):
 
     def test_view_moderation_http_post_message_from_moderator_blank(self):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
-        client_moderator.post(reverse('moderation:moderation', args=[request.id]),
+        client_moderator.post(reverse('moderation:initiate_moderation', args=[request.id]),
                               {'status': RequestForModeration.DENIED, 'message_from_moderator': ""})
         self.assertFalse(RequestForModeration.objects.filter(id=request.id, status=RequestForModeration.DENIED)
                          .exists())
