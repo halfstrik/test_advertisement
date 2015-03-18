@@ -7,8 +7,11 @@ from django.contrib.auth.models import Group
 from texts.models import TextCouple, TextCoupleCopy
 from test_advertisement.settings import LOGIN_URL
 from moderation.models import RequestForModeration
-from texts.tests import create_valid_random_text_couple, get_client_and_user_of_create_random_user_and_login
+from texts.tests import create_valid_random_text_couple, get_client_and_user_of_create_random_user_and_login, \
+    create_two_random_text
 from moderation.forms import ModerationForm
+from moderation.views import begin_moderation, ModerationError, moderation
+from django.contrib.auth.models import User
 
 
 def create_group(group_name):
@@ -225,3 +228,85 @@ class FormTests(TestCase):
     def test_ModerationForm_with_status_denied_message_len_equals_501(self):
         self.assertFalse(ModerationForm({'status': RequestForModeration.DENIED,
                                         'message_from_moderator': 'qwertyuiop'*50 + "a"}).is_valid())
+
+
+def create_user_and_request_for_moderation(status):
+    username, password = create_two_random_text()
+    user = User(username=username, password=password)
+    user.save()
+    text_couple = create_valid_random_text_couple(user)
+    text_couple_copy = text_couple.create_copy()
+    request_for_moderation = RequestForModeration(content_object=text_couple_copy, status=status)
+    request_for_moderation.save()
+    return user, request_for_moderation
+
+
+class FunctionTests(TestCase):
+    def test_begin_moderation_status_approval_pending(self):
+        user, request_for_moderation = create_user_and_request_for_moderation(RequestForModeration.APPROVAL_PENDING)
+        error = False
+        try:
+            begin_moderation(user, request_for_moderation)
+        except ModerationError:
+            error = True
+        self.assertFalse(error)
+
+    def test_begin_moderation_status_accepted(self):
+        user, request_for_moderation = create_user_and_request_for_moderation(RequestForModeration.ACCEPTED)
+        self.assertRaises(ModerationError, begin_moderation, user, request_for_moderation)
+
+    def test_function_begin_moderation_status_denied(self):
+        user, request_for_moderation = create_user_and_request_for_moderation(RequestForModeration.DENIED)
+        self.assertRaises(ModerationError, begin_moderation, user, request_for_moderation)
+
+    def test_function_begin_moderation_status_canceled(self):
+        user, request_for_moderation = create_user_and_request_for_moderation(RequestForModeration.CANCELED)
+        self.assertRaises(ModerationError, begin_moderation, user, request_for_moderation)
+
+    def test_function_begin_moderation_status_is_moderated(self):
+        user, request_for_moderation = create_user_and_request_for_moderation(RequestForModeration.IS_MODERATED)
+        self.assertRaises(ModerationError, begin_moderation, user, request_for_moderation)
+
+    def test_function_begin_moderation_status_is_moderated_moderator_user(self):
+        user, request_for_moderation = create_user_and_request_for_moderation(RequestForModeration.IS_MODERATED)
+        request_for_moderation.moderator = user
+        error = False
+        try:
+            begin_moderation(user, request_for_moderation)
+        except ModerationError:
+            error = True
+        self.assertFalse(error)
+
+    def test_function_moderation_status_accepted(self):
+        user, request_for_moderation = create_user_and_request_for_moderation(RequestForModeration.APPROVAL_PENDING)
+        message = ''.join(random.sample('abcdefjk', 8))
+        moderation(user, request_for_moderation, RequestForModeration.ACCEPTED, message)
+        self.assertEquals(request_for_moderation.status, RequestForModeration.ACCEPTED)
+        self.assertEquals(request_for_moderation.message_from_moderator, message)
+        self.assertEquals(request_for_moderation.moderator, user)
+
+    def test_function_moderation_status_denied(self):
+        user, request_for_moderation = create_user_and_request_for_moderation(RequestForModeration.APPROVAL_PENDING)
+        message = ''.join(random.sample('abcdefjk', 8))
+        moderation(user, request_for_moderation, RequestForModeration.DENIED, message)
+        self.assertEquals(request_for_moderation.status, RequestForModeration.DENIED)
+        self.assertEquals(request_for_moderation.message_from_moderator, message)
+        self.assertEquals(request_for_moderation.moderator, user)
+
+    def test_function_moderation_status_approval_pending(self):
+        user, request_for_moderation = create_user_and_request_for_moderation(RequestForModeration.APPROVAL_PENDING)
+        message = ''.join(random.sample('abcdefjk', 8))
+        self.assertRaises(ModerationError, moderation, user, request_for_moderation,
+                          RequestForModeration.APPROVAL_PENDING, message)
+
+    def test_function_moderation_status_canceled(self):
+        user, request_for_moderation = create_user_and_request_for_moderation(RequestForModeration.APPROVAL_PENDING)
+        message = ''.join(random.sample('abcdefjk', 8))
+        self.assertRaises(ModerationError, moderation, user, request_for_moderation, RequestForModeration.CANCELED,
+                          message)
+
+    def test_function_moderation_status_is_moderated(self):
+        user, request_for_moderation = create_user_and_request_for_moderation(RequestForModeration.APPROVAL_PENDING)
+        message = ''.join(random.sample('abcdefjk', 8))
+        self.assertRaises(ModerationError, moderation, user, request_for_moderation, RequestForModeration.IS_MODERATED,
+                          message)

@@ -60,35 +60,34 @@ def list_request_for_moderation(request):
         return HttpResponse(html)
 
 
-def moderation(user, request_for_moderation, form):
-        status = ''
-        if form.cleaned_data['status'] == RequestForModeration.DENIED:
-            status = RequestForModeration.DENIED
-        elif form.cleaned_data['status'] == RequestForModeration.ACCEPTED:
-            status = RequestForModeration.ACCEPTED
-        request_for_moderation.status = status
-        request_for_moderation.message_from_moderator = form.cleaned_data['message_from_moderator']
-        request_for_moderation.moderator = user
-        request_for_moderation.save()
-
-
-class ErrorModeration(Exception):
-    def __init__(self):
+class ModerationError(Exception):
         pass
 
 
-def begin_moderation(user, request_for_moderation):
-    if (request_for_moderation.status == RequestForModeration.ACCEPTED) | \
-            (request_for_moderation.status == RequestForModeration.DENIED):
-        raise ErrorModeration
-    if request_for_moderation.status == RequestForModeration.CANCELED:
-        raise ErrorModeration
-    if (request_for_moderation.status == RequestForModeration.IS_MODERATED) and \
-            (request_for_moderation.moderator != user):
-        raise ErrorModeration
-    request_for_moderation.status = RequestForModeration.IS_MODERATED
+def moderation(user, request_for_moderation, status, message):
+    if status == RequestForModeration.DENIED:
+        status_request = RequestForModeration.DENIED
+    elif status == RequestForModeration.ACCEPTED:
+        status_request = RequestForModeration.ACCEPTED
+    else:
+        raise ModerationError
+    request_for_moderation.status = status_request
+    request_for_moderation.message_from_moderator = message
     request_for_moderation.moderator = user
     request_for_moderation.save()
+
+
+def begin_moderation(user, request_for_moderation):
+    if request_for_moderation.status in (RequestForModeration.ACCEPTED, RequestForModeration.DENIED,
+                                         RequestForModeration.CANCELED):
+        raise ModerationError
+    elif request_for_moderation.status == RequestForModeration.IS_MODERATED:
+        if request_for_moderation.moderator != user:
+            raise ModerationError
+    else:
+        request_for_moderation.status = RequestForModeration.IS_MODERATED
+        request_for_moderation.moderator = user
+        request_for_moderation.save()
 
 
 def is_user_in_moderator_group(user):
@@ -100,13 +99,17 @@ def initiate_moderation(request, request_for_moderation_id):
     request_for_moderation = get_object_or_404(RequestForModeration, id=request_for_moderation_id)
     try:
         begin_moderation(request.user, request_for_moderation)
-    except ErrorModeration:
-        return HttpResponse('В данный момент модерация запроса невозможна')
+    except ModerationError:
+        return HttpResponse("Can't initiate moderation as request is not in APPROVAL_PENDING state")
     form = ModerationForm()
     if request.method == 'POST':
         form = ModerationForm(request.POST)
         if form.is_valid():
-            moderation(request.user, request_for_moderation, form)
+            try:
+                moderation(request.user, request_for_moderation, form.cleaned_data['status'],
+                           form.cleaned_data['message_from_moderator'])
+            except ModerationError:
+                return HttpResponse("You can select the status of ACCEPTED or DENIED")
             return HttpResponseRedirect(reverse('moderation:list_request_for_moderation'))
     return render(request, 'moderation/moderation.html', {'form': form, 'advertiser': request_for_moderation.
                   content_object.display()})
