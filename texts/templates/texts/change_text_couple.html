@@ -3,6 +3,16 @@
 
 {% block content %}
 <h1>Make edition for {{ text_couple }}</h1>
+    <table>
+        <tr>
+            <td><h3>Current short text:</h3></td>
+            <td><p>{{ text_couple.short }}</p></td>
+        </tr>
+        <tr>
+            <td><h3>Current long text:</h3></td>
+            <td><p>{{ text_couple.long }}</p></td>
+        </tr>
+    </table>
 <form action="" method="post">
     <table>
         {% csrf_token %}

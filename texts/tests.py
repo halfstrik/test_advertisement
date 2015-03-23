@@ -369,6 +369,13 @@ class ViewTests(TestCase):
                                                                                       args=[text_couple.id,
                                                                                             'texts', 'TextCouple']))
 
+    def test_view_text_couple_http_get_current_text_couple(self):
+        client, user = get_client_and_user_of_create_random_user_and_login()
+        text_couple = create_valid_random_text_couple(user)
+        response = client.get(reverse('texts:view_text_couple', args=[text_couple.id]))
+        self.assertContains(response, text_couple.short)
+        self.assertContains(response, text_couple.long)
+
 
 class FormTests(TestCase):
     def test_TextCoupleForm_with_short_text_len_equals_31(self):

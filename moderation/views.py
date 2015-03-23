@@ -35,6 +35,25 @@ def send_to_moderation(request, advertising_id, advertising_app, advertising_mod
     return render(request, 'moderation/send_to_moderation.html', {'text_couple': advertising})
 
 
+def list_request_for_moderation_to_moderator(request):
+    list_for_context = RequestForModeration.objects.filter(Q(status=RequestForModeration.APPROVAL_PENDING) | Q(
+        status=RequestForModeration.IS_MODERATED)).order_by('date_of_last_moderation')
+    context = RequestContext(request, {"list_request_for_moderation_moderator": list_for_context})
+    html = get_template('moderation/list_request_for_moderation_to_moderator.html').render(context)
+    return html
+
+
+def list_request_for_moderation_to_advertiser(request):
+    list_request_for_moderation_advertiser = list(RequestForModeration.objects.all())
+    list_for_context = list()
+    for request_for_moderation in list_request_for_moderation_advertiser:
+        if request_for_moderation.content_object.user == request.user:
+            list_for_context.append(request_for_moderation)
+    context = RequestContext(request, {"list_request_for_moderation_advertiser": list_for_context})
+    html = get_template('moderation/list_request_for_moderation_to_advertiser.html').render(context)
+    return html
+
+
 @login_required
 def list_request_for_moderation(request):
     try:
@@ -42,23 +61,9 @@ def list_request_for_moderation(request):
     except ObjectDoesNotExist:
         group = None
     if group == 'Moderator':
-        list_request_for_moderation_moderator = RequestForModeration.objects.filter(Q(status=RequestForModeration.
-                                                                                      APPROVAL_PENDING) | Q(
-            status=RequestForModeration.IS_MODERATED)).order_by('date_of_last_moderation')
-        context = RequestContext(request,
-                                 {"list_request_for_moderation_moderator": list_request_for_moderation_moderator})
-        html = get_template('moderation/list_request_for_moderation_to_moderator.html').render(context)
-        return HttpResponse(html)
+        return HttpResponse(list_request_for_moderation_to_moderator(request))
     else:
-        list_request_for_moderation_advertiser = list(RequestForModeration.objects.all())
-        list_for_context = list()
-        for request_for_moderation in list_request_for_moderation_advertiser:
-            if request_for_moderation.content_object.user == request.user:
-                list_for_context.append(request_for_moderation)
-        context = RequestContext(request,
-                                 {"list_request_for_moderation_advertiser": list_for_context})
-        html = get_template('moderation/list_request_for_moderation_to_advertiser.html').render(context)
-        return HttpResponse(html)
+        return HttpResponse(list_request_for_moderation_to_advertiser(request))
 
 
 class ModerationError(Exception):
