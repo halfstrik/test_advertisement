@@ -7,6 +7,14 @@
     <link rel="stylesheet" type="text/css" href="{% static "style.css"%}">
 </head>
 <body>
+    <p>User: {{ user }}
+    {% if groups %}
+        | Groups:
+        {% for group in groups %}
+            {{ group.name }}
+        {% endfor %}
+    {% endif %}
+    | <a href="{% url 'admin:logout' %}">Log out</a></p>
     {% block content %}
     {% endblock %}
 </body>

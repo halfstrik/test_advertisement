@@ -9,6 +9,7 @@ from django.views.defaults import permission_denied
 
 from texts.models import TextCouple, TextCoupleCopy
 from texts.forms import TextCoupleForm
+from moderation.views import get_user_group
 
 
 @login_required
@@ -20,7 +21,10 @@ def add_text_couple(request):
         if form.is_valid():
             record_text_couple_in_db(form, user)
             return HttpResponseRedirect(reverse('texts:list_text_couples'))
-    html = get_template('texts/add_text_couple.html').render(RequestContext(request, {'form': form, }))
+    html = get_template('texts/add_text_couple.html').render(RequestContext(request, {'form': form,
+                                                                                      'user': request.user,
+                                                                                      'groups': get_user_group(request.
+                                                                                                              user)}))
     return HttpResponse(html)
 
 
@@ -35,7 +39,9 @@ def record_text_couple_in_db(form, user):
 def list_text_couples(request):
     text_couples = TextCouple.objects.filter(user=request.user)
     html = get_template('texts/list_text_couples.html').render(RequestContext(request,
-                                                                              {'text_couples': text_couples, }))
+                                                                              {'text_couples': text_couples,
+                                                                               'user': request.user,
+                                                                               'groups': get_user_group(request.user)}))
     return HttpResponse(html)
 
 
@@ -44,7 +50,8 @@ def view_text_couple(request, text_couple_id):
     text_couple = get_object_or_404(TextCouple, pk=text_couple_id)
     if text_couple.user != request.user:
         return permission_denied(request)
-    return render(request, 'texts/view_text_couple.html', {'text_couple': text_couple})
+    return render(request, 'texts/view_text_couple.html', {'text_couple': text_couple, 'user': request.user,
+                                                           'groups': get_user_group(request.user)})
 
 
 @login_required
@@ -61,7 +68,8 @@ def delete_text_couple(request, text_couple_id):
             text_couple_copy.canceled_request_for_moderation()
         text_couple.delete()
         return HttpResponseRedirect(reverse('texts:list_text_couples'))
-    return render(request, 'texts/delete_text_couple.html', {'text_couple': text_couple})
+    return render(request, 'texts/delete_text_couple.html', {'text_couple': text_couple, 'user': request.user,
+                                                             'groups': get_user_group(request.user)})
 
 
 @login_required
@@ -69,7 +77,9 @@ def change_text_couple(request, text_couple_id):
     text_couple = get_object_or_404(TextCouple, pk=text_couple_id)
     if text_couple.user != request.user:
         return permission_denied(request)
-    form = TextCoupleForm()
+    form = TextCoupleForm(
+        initial={'short': text_couple.short, 'long': text_couple.long}
+    )
     if request.method == 'POST':
         form = TextCoupleForm(request.POST)
         if form.is_valid():
@@ -84,4 +94,6 @@ def change_text_couple(request, text_couple_id):
             return HttpResponseRedirect(reverse('texts:list_text_couples'))
     url_send_to_moderation = reverse('moderation:send_to_moderation', args=[text_couple_id, 'texts', 'TextCouple'])
     return render(request, 'texts/change_text_couple.html', {'form': form, 'text_couple': text_couple,
-                                                             'send_to_moderation': url_send_to_moderation})
+                                                             'send_to_moderation': url_send_to_moderation,
+                                                             'user': request.user,
+                                                             'groups': get_user_group(request.user)})

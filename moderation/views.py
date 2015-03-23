@@ -15,6 +15,14 @@ from moderation.models import RequestForModeration
 from moderation.forms import ModerationForm
 
 
+def get_user_group(user):
+    try:
+        group = user.groups.filter()
+    except ObjectDoesNotExist:
+        group = None
+    return group
+
+
 @login_required
 def send_to_moderation(request, advertising_id, advertising_app, advertising_model):
     try:
@@ -32,13 +40,15 @@ def send_to_moderation(request, advertising_id, advertising_app, advertising_mod
         request_for_moderation = RequestForModeration(content_object=copy, status=RequestForModeration.APPROVAL_PENDING)
         request_for_moderation.save()
         return HttpResponseRedirect(reverse('texts:list_text_couples'))
-    return render(request, 'moderation/send_to_moderation.html', {'text_couple': advertising})
+    return render(request, 'moderation/send_to_moderation.html', {'text_couple': advertising, 'user': request.user,
+                                                                  'groups': get_user_group(request.user)})
 
 
 def list_request_for_moderation_to_moderator(request):
     list_for_context = RequestForModeration.objects.filter(Q(status=RequestForModeration.APPROVAL_PENDING) | Q(
         status=RequestForModeration.IS_MODERATED)).order_by('date_of_last_moderation')
-    context = RequestContext(request, {"list_request_for_moderation_moderator": list_for_context})
+    context = RequestContext(request, {"list_request_for_moderation_moderator": list_for_context, 'user': request.user,
+                                       'groups': get_user_group(request.user)})
     html = get_template('moderation/list_request_for_moderation_to_moderator.html').render(context)
     return html
 
@@ -49,18 +59,16 @@ def list_request_for_moderation_to_advertiser(request):
     for request_for_moderation in list_request_for_moderation_advertiser:
         if request_for_moderation.content_object.user == request.user:
             list_for_context.append(request_for_moderation)
-    context = RequestContext(request, {"list_request_for_moderation_advertiser": list_for_context})
+    context = RequestContext(request, {"list_request_for_moderation_advertiser": list_for_context, 'user': request.user,
+                                       'groups': get_user_group(request.user)})
     html = get_template('moderation/list_request_for_moderation_to_advertiser.html').render(context)
     return html
 
 
 @login_required
 def list_request_for_moderation(request):
-    try:
-        group = request.user.groups.get().name
-    except ObjectDoesNotExist:
-        group = None
-    if group == 'Moderator':
+    groups = get_user_group(request.user)
+    if groups.filter(name=MODERATORS_GROUP):
         return HttpResponse(list_request_for_moderation_to_moderator(request))
     else:
         return HttpResponse(list_request_for_moderation_to_advertiser(request))
@@ -118,4 +126,4 @@ def initiate_moderation(request, request_for_moderation_id):
                 return HttpResponse("You can select the status of ACCEPTED or DENIED")
             return HttpResponseRedirect(reverse('moderation:list_request_for_moderation'))
     return render(request, 'moderation/moderation.html', {'form': form, 'advertiser': request_for_moderation.
-                  content_object.display()})
+                  content_object.display(), 'user': request.user, 'groups': get_user_group(request.user)})

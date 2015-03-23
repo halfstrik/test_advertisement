@@ -336,7 +336,8 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'form')
         self.assertContains(response, 'csrfmiddlewaretoken')
-        self.assertContains(response, TextCoupleForm().as_table())
+        self.assertContains(response, TextCoupleForm(initial={'short': text_couple.short, 'long': text_couple.long}).
+                            as_table())
         self.assertContains(response, 'Make edition for %s' % text_couple.short)
 
     def test_change_text_couple_http_post_empty_form(self):
@@ -368,13 +369,6 @@ class ViewTests(TestCase):
         self.assertContains(response, '<a href="%s">Send to moderation</a>' % reverse('moderation:send_to_moderation',
                                                                                       args=[text_couple.id,
                                                                                             'texts', 'TextCouple']))
-
-    def test_view_text_couple_http_get_current_text_couple(self):
-        client, user = get_client_and_user_of_create_random_user_and_login()
-        text_couple = create_valid_random_text_couple(user)
-        response = client.get(reverse('texts:view_text_couple', args=[text_couple.id]))
-        self.assertContains(response, text_couple.short)
-        self.assertContains(response, text_couple.long)
 
 
 class FormTests(TestCase):

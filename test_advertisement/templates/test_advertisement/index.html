@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<p>User: {{ user }} | <a href="{% url 'admin:logout' %}">Log out</a></p>
+<h2>Menu:</h2>
+<table>
+    <tr>
+        <td><a href="{% url 'texts:list_text_couples' %}">List text couples</a></td>
+    </tr>
+    <tr>
+        <td><a href="{% url 'moderation:list_request_for_moderation' %}">List request for moderation</a></td>
+     </tr>
+    <tr>
+        <td><a href="{% url 'admin:login' %}">Login</a></td>
+    </tr>
+</table>
+</body>
+</html>

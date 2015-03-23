@@ -90,3 +90,6 @@ LOGIN_URL = '/admin/login/'
 MODERATORS_GROUP = "Moderator"
 
 FIXTURE_DIRS = {os.path.join(BASE_DIR, '/moderation/fixtures')}
+
+TEMPLATE_DIRS = {
+    os.path.join(BASE_DIR, 'test_advertisement/templates'), }
