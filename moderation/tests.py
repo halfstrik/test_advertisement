@@ -5,7 +5,7 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import Group
 
 from texts.models import TextCouple, TextCoupleCopy
-from test_advertisement.settings import LOGIN_URL
+from test_advertisement.settings import LOGIN_URL, MODERATORS_GROUP
 from moderation.models import RequestForModeration
 from texts.tests import create_valid_random_text_couple, get_client_and_user_of_create_random_user_and_login, \
     create_two_random_text
@@ -310,3 +310,11 @@ class FunctionTests(TestCase):
         message = ''.join(random.sample('abcdefjk', 8))
         self.assertRaises(ModerationError, moderation, user, request_for_moderation, RequestForModeration.IS_MODERATED,
                           message)
+
+
+class FixturesTests(TestCase):
+    fixtures = ['initial_data.json', ]
+
+    def test_fixtures_group_contains_moderator(self):
+        group = Group.objects.filter(name="Moderator")
+        self.assertTrue(group)

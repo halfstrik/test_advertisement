@@ -86,3 +86,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 LOGIN_URL = '/admin/login/'
+
+MODERATORS_GROUP = "Moderator"
+
+FIXTURE_DIRS = {os.path.join(BASE_DIR, '/moderation/fixtures')}

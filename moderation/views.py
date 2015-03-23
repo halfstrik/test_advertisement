@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.template import RequestContext
 from django.template.loader import get_template
 from django.db.models import Q
+from test_advertisement.settings import MODERATORS_GROUP
 
 from moderation.models import RequestForModeration
 from moderation.forms import ModerationForm
@@ -91,7 +92,7 @@ def begin_moderation(user, request_for_moderation):
 
 
 def is_user_in_moderator_group(user):
-    return user.groups.filter(name='Moderator').exists()
+    return user.groups.filter(name=MODERATORS_GROUP).exists()
 
 
 @user_passes_test(is_user_in_moderator_group)
