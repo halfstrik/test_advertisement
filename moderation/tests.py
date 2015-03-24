@@ -15,8 +15,7 @@ from django.contrib.auth.models import User
 
 
 def create_group(group_name):
-    group = Group(name=group_name)
-    group.save()
+    group = Group.objects.get(name=MODERATORS_GROUP)
     return group
 
 
