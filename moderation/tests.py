@@ -10,7 +10,7 @@ from moderation.models import RequestForModeration
 from texts.tests import create_valid_random_text_couple, get_client_and_user_of_create_random_user_and_login, \
     create_two_random_text
 from moderation.forms import ModerationForm
-from moderation.views import begin_moderation, ModerationError, moderation
+from moderation.views import begin_moderation, ModerationError, moderation, get_user_group
 from django.contrib.auth.models import User
 
 
@@ -25,11 +25,11 @@ def create_users_request_to_moderation_and_text_couple_copy():
     text_couple = create_valid_random_text_couple(user)
     client.post(reverse('moderation:send_to_moderation', args=[text_couple.id, 'texts', 'TextCouple']))
     text_couple_copy = TextCoupleCopy.objects.get(short=text_couple.short, long=text_couple.long, parent=text_couple)
-    request = RequestForModeration.objects.get(object_id=text_couple_copy.id)
-    group = create_group('Moderator')
+    request_for_moderation = RequestForModeration.objects.get(object_id=text_couple_copy.id)
+    group = create_group(MODERATORS_GROUP)
     client_moderator, user_moderator = get_client_and_user_of_create_random_user_and_login()
     user_moderator.groups.add(group)
-    return client, client_moderator, request, text_couple_copy
+    return client, client_moderator, request_for_moderation, text_couple_copy
 
 
 class ModerationViewTests(TestCase):
@@ -118,8 +118,7 @@ class ModerationViewTests(TestCase):
         client, user = get_client_and_user_of_create_random_user_and_login()
         text_couple = create_valid_random_text_couple(user)
         client.post(reverse('moderation:send_to_moderation', args=[text_couple.id, 'texts', 'TextCouple']))
-        group = Group(name='Moderator')
-        group.save()
+        group = create_group(MODERATORS_GROUP)
         client_moderator, user_moderator = get_client_and_user_of_create_random_user_and_login()
         user_moderator.groups.add(group)
         response = client_moderator.get(reverse('moderation:list_request_for_moderation'))
@@ -170,7 +169,8 @@ class ModerationViewTests(TestCase):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
         response = client.get(reverse('moderation:initiate_moderation', args=[text_couple_copy.parent.id]))
         self.assertEqual(response.status_code, 302)
-#        self.assertTrue(response.url.endswith(reverse('admin')))
+        self.assertTrue(response.url.endswith(LOGIN_URL + '?next=' + reverse('moderation:initiate_moderation',
+                                                                             args=[text_couple_copy.parent.id])))
 
     def test_view_moderation_http_get(self):
         client, client_moderator, request, text_couple_copy = create_users_request_to_moderation_and_text_couple_copy()
@@ -242,6 +242,8 @@ def create_user_and_request_for_moderation(status):
 
 
 class FunctionTests(TestCase):
+    fixtures = ['initial_data.json', ]
+
     def test_begin_moderation_status_approval_pending(self):
         user, request_for_moderation = create_user_and_request_for_moderation(RequestForModeration.APPROVAL_PENDING)
         error = False
@@ -311,10 +313,17 @@ class FunctionTests(TestCase):
         self.assertRaises(ModerationError, moderation, user, request_for_moderation, RequestForModeration.IS_MODERATED,
                           message)
 
+    def test_function_get_user_group(self):
+        add_group = create_group(''.join(random.sample('abcdefjk', 8)))
+        client, user = get_client_and_user_of_create_random_user_and_login()
+        user.groups.add(add_group)
+        group = get_user_group(user)
+        self.assertIn(add_group, group)
+
 
 class FixturesTests(TestCase):
     fixtures = ['initial_data.json', ]
 
     def test_fixtures_group_contains_moderator(self):
-        group = Group.objects.filter(name="Moderator")
+        group = Group.objects.filter(name=MODERATORS_GROUP)
         self.assertTrue(group)

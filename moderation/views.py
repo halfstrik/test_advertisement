@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.defaults import permission_denied
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.template import RequestContext
+from django.template import Context
 from django.template.loader import get_template
 from django.db.models import Q
 from test_advertisement.settings import MODERATORS_GROUP
@@ -44,34 +44,35 @@ def send_to_moderation(request, advertising_id, advertising_app, advertising_mod
                                                                   'groups': get_user_group(request.user)})
 
 
-def list_request_for_moderation_to_moderator(request):
+def list_request_for_moderation_to_moderator(user):
     list_for_context = RequestForModeration.objects.filter(Q(status=RequestForModeration.APPROVAL_PENDING) | Q(
         status=RequestForModeration.IS_MODERATED)).order_by('date_of_last_moderation')
-    context = RequestContext(request, {"list_request_for_moderation_moderator": list_for_context, 'user': request.user,
-                                       'groups': get_user_group(request.user)})
-    html = get_template('moderation/list_request_for_moderation_to_moderator.html').render(context)
-    return html
+    context = Context({"list_request_for_moderation_moderator": list_for_context,
+                       'user': user,
+                       'groups': get_user_group(user)})
+    return context
 
 
-def list_request_for_moderation_to_advertiser(request):
+def list_request_for_moderation_to_advertiser(user):
     list_request_for_moderation_advertiser = list(RequestForModeration.objects.all())
     list_for_context = list()
     for request_for_moderation in list_request_for_moderation_advertiser:
-        if request_for_moderation.content_object.user == request.user:
+        if request_for_moderation.content_object.user == user:
             list_for_context.append(request_for_moderation)
-    context = RequestContext(request, {"list_request_for_moderation_advertiser": list_for_context, 'user': request.user,
-                                       'groups': get_user_group(request.user)})
-    html = get_template('moderation/list_request_for_moderation_to_advertiser.html').render(context)
-    return html
+    context = Context({"list_request_for_moderation_advertiser": list_for_context, 'user': user,
+                       'groups': get_user_group(user)})
+    return context
 
 
 @login_required
 def list_request_for_moderation(request):
     groups = get_user_group(request.user)
     if groups.filter(name=MODERATORS_GROUP):
-        return HttpResponse(list_request_for_moderation_to_moderator(request))
+        context = list_request_for_moderation_to_moderator(request.user)
+        return HttpResponse(get_template('moderation/list_request_for_moderation_to_moderator.html').render(context))
     else:
-        return HttpResponse(list_request_for_moderation_to_advertiser(request))
+        context = list_request_for_moderation_to_advertiser(request.user)
+        return HttpResponse(get_template('moderation/list_request_for_moderation_to_advertiser.html').render(context))
 
 
 class ModerationError(Exception):

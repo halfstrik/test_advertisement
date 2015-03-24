@@ -24,7 +24,7 @@ def add_text_couple(request):
     html = get_template('texts/add_text_couple.html').render(RequestContext(request, {'form': form,
                                                                                       'user': request.user,
                                                                                       'groups': get_user_group(request.
-                                                                                                              user)}))
+                                                                                                               user)}))
     return HttpResponse(html)
 
 
