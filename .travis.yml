@@ -4,7 +4,7 @@ python:
 install:
   - pip install django==1.7.4
   - pip install pytz
-  - pip boto
+  - pip install boto
   - pip install django-storages-redux
 
 
