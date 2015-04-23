@@ -1,0 +1,23 @@
+{% extends "audio_advertising/base.html" %}
+
+
+{% block content %}
+{% if list_advertising %}
+<table>
+    <tbody>
+    {% for advertising in list_advertising %}
+    <tr>
+        <td>{{ advertising.title }}</td>
+        <td>{{ advertising.audio_file.name }}</td>
+        <td>
+            <a href="{% url 'audio_advertising:view_audio_advertising' advertising.pk %}">Editing</a>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No audio advertising were created yet.</p>
+{% endif %}
+<a href="{% url 'audio_advertising:add_audio_advertising' %}">Add audio advertising</a>
+{% endblock %}

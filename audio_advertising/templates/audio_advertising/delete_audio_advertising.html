@@ -1,0 +1,10 @@
+{% extends "audio_advertising/base.html" %}
+
+
+{% block content %}
+<h1>Deletion of {{ audio_advertising }}, proceed?</h1>
+<form action="" method="post">
+    {% csrf_token %}
+    <input type="submit" value="Delete">
+</form>
+{% endblock %}

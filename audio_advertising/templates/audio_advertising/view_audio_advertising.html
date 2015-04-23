@@ -1,0 +1,14 @@
+{% extends "audio_advertising/base.html" %}
+
+
+{% block content %}
+<p>{{ audio_advertising.title }} {{ audio_advertising.audio_file.name }}</p>
+    <br>
+    <audio controls>
+        <source src="{{ audio_advertising.audio_file.url }}" type="audio/ogg; codecs=vorbis">
+    </audio>
+    <br>
+<a href="{% url 'audio_advertising:delete_audio_advertising' audio_advertising.pk %}">Delete audio advertising</a>
+<a href="{% url 'audio_advertising:change_audio_advertising' audio_advertising.pk %}">Change audio advertising<</a>
+<a href="{% url 'moderation:send_to_moderation' audio_advertising.id 'audio_advertising' 'AudioAdvertising' %}">Send to moderation</a>
+{% endblock %}

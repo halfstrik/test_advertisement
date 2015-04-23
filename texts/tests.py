@@ -94,9 +94,9 @@ class ViewTests(TestCase):
         self.assertTrue(response.url.endswith(LOGIN_URL + '?next=' + reverse('texts:add_text_couple')))
 
     def test_list_text_couple_http_get_anonymous_user(self):
-        response = Client().get(reverse('texts:add_text_couple'))
+        response = Client().get(reverse('texts:list_text_couples'))
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.url.endswith(LOGIN_URL + '?next=' + reverse('texts:add_text_couple')))
+        self.assertTrue(response.url.endswith(LOGIN_URL + '?next=' + reverse('texts:list_text_couples')))
 
     def test_list_text_couples_http_get_with_no_text_couples(self):
         client, user = get_client_and_user_of_create_random_user_and_login()

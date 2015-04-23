@@ -39,6 +39,9 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'texts',
     'moderation',
+    'storages',
+    'audio_advertising'
+
 )
 
 MIDDLEWARE_CLASSES = (
@@ -88,8 +91,25 @@ STATIC_URL = '/static/'
 LOGIN_URL = '/admin/login/'
 
 MODERATORS_GROUP = "Moderator"
+ADVERTISER_GROUP = "Advertiser"
 
 FIXTURE_DIRS = {os.path.join(BASE_DIR, '/moderation/fixtures')}
 
 TEMPLATE_DIRS = {
     os.path.join(BASE_DIR, 'test_advertisement/templates'), }
+
+# Settings for Django-storages
+from boto.s3.connection import NoHostProvided
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
+AWS_ACCESS_KEY_ID = '8XK4DJR_KVR7UT6TYWGV'
+AWS_SECRET_ACCESS_KEY = 'KzUOLwf-L3YcExTGA4w0FIQXcSaSoQ4zSjGNQA=='
+AWS_STORAGE_BUCKET_NAME = 'audioadvertising'
+AWS_AUTO_CREATE_BUCKET = True
+AWS_S3_HOST = NoHostProvided
+AWS_S3_USE_SSL = False
+AWS_S3_SECURE_URLS = False
+AWS_DEFAULT_ACL = 'public-read-write'
+AWS_S3_PROXY_HOST = '127.0.0.1'
+AWS_S3_PROXY_PORT = 8080
+AWS_S3_CUSTOM_DOMAIN = '%s:%s/%s' % (AWS_S3_PROXY_HOST, AWS_S3_PROXY_PORT, AWS_STORAGE_BUCKET_NAME)
