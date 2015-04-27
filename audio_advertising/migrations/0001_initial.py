@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(verbose_name='ID', auto_created=True, serialize=False, primary_key=True)),
                 ('title', models.CharField(max_length=30)),
                 ('audio_file', models.FileField(upload_to='audio_files')),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('advertiser', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
             ],
             options={
             },
