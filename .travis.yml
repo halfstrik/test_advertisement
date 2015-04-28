@@ -6,6 +6,7 @@ install:
   - pip install pytz
   - pip install boto
   - pip install django-storages-redux
+  - pip install python-magic
 
 
 script: python manage.py test

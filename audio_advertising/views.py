@@ -81,7 +81,7 @@ def add_audio_advertising(request):
 def list_audio_advertising(request):
     try:
         list_advertising = AudioAdvertising.objects.filter(advertiser=request.user)
-    except ConnectionError:
+    except (ConnectionError, S3ResponseError):
         return HttpResponse('Storage is currently unavailable. Please try again later or contact your administrator.')
     html = get_template('audio_advertising/list_audio_advertising.html').render(
         RequestContext(request, {'list_advertising': list_advertising,
@@ -112,7 +112,7 @@ def delete_audio_advertising(request, audio_advertising_id):
         try:
             audio_advertising.audio_file.delete()
             audio_advertising.delete()
-        except ConnectionError:
+        except (ConnectionError, S3ResponseError):
             return HttpResponse('DB or storage is currently unavailable. '
                                 'Please try again later or contact your administrator.')
         return HttpResponseRedirect(reverse('audio_advertising:list_audio_advertising'))
@@ -133,16 +133,18 @@ def change_audio_advertising(request, audio_advertising_id):
             if 'audio_file' in request.FILES:
                 title = form.cleaned_data['title']
                 audio_file = request.FILES.get('audio_file')
-                audio_file._set_name('%s_%s_%s' % (time.time(), request.user, audio_file.name))
+                if not(check_file_type(audio_file)):
+                    return HttpResponse('This type of file is not supported.')
+                audio_file._set_name('%s_%s_%s' % (request.user, time.time(), audio_file.name))
                 audio_advertising.title = title
                 try:
                     audio_advertising.audio_file.delete()
-                except ConnectionError:
+                except (ConnectionError, S3ResponseError):
                     return HttpResponse('No deleted file')
                 audio_advertising.audio_file = audio_file
                 try:
                     audio_advertising.save()
-                except ConnectionError:
+                except (ConnectionError, S3ResponseError):
                     return HttpResponse('Storage or DB is currently unavailable. '
                                         'Please try again later or contact your administrator.')
                 return HttpResponseRedirect(reverse('audio_advertising:list_audio_advertising'))
