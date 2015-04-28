@@ -7,12 +7,16 @@ from django.views.defaults import permission_denied
 from django.core.urlresolvers import reverse
 import time
 import boto
+import magic
+from boto.exception import S3ResponseError
 
 from audio_advertising.forms import AudioAdvertisingForm
 from audio_advertising.models import AudioAdvertising
 from moderation.views import get_user_group
 from test_advertisement.settings import ADVERTISER_GROUP, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_PROXY_HOST, \
     AWS_S3_PROXY_PORT, AWS_STORAGE_BUCKET_NAME
+
+list_of_supported_types = ["Ogg data, Vorbis audio", ]
 
 
 def create_new_audio_advertising(title, audio_file, user):
@@ -40,6 +44,15 @@ def check_file_exist(link_to_file):
     return existence_of_file
 
 
+def check_file_type(file):
+    file_type = magic.from_buffer(file.read())
+    for supported_type in list_of_supported_types:
+        if supported_type in str(file_type):
+            return True
+        else:
+            return False
+
+
 @user_passes_test(is_user_in_advertiser_group)
 def add_audio_advertising(request):
     form = AudioAdvertisingForm()
@@ -48,11 +61,14 @@ def add_audio_advertising(request):
         form = AudioAdvertisingForm(request.POST, request.FILES)
         if form.is_valid():
             if 'audio_file' in request.FILES:
-                audio_advertising = create_new_audio_advertising(form.cleaned_data['title'],
-                                                                 request.FILES.get('audio_file'), request.user)
+                if check_file_type(request.FILES.get('audio_file')):
+                    audio_advertising = create_new_audio_advertising(form.cleaned_data['title'],
+                                                                     request.FILES.get('audio_file'), request.user)
+                else:
+                    return HttpResponse('This type of file is not supported.')
                 try:
                     audio_advertising.save()
-                except ConnectionError:
+                except (ConnectionError, S3ResponseError):
                     return HttpResponse('Storage is currently unavailable. '
                                         'Please try again later or contact your administrator.')
                 return HttpResponseRedirect(reverse('audio_advertising:list_audio_advertising'))
