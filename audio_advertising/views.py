@@ -7,7 +7,7 @@ from django.views.defaults import permission_denied
 from django.core.urlresolvers import reverse
 import time
 import boto
-import magic
+
 from boto.exception import S3ResponseError
 
 from audio_advertising.forms import AudioAdvertisingForm
@@ -45,6 +45,7 @@ def check_file_exist(link_to_file):
 
 
 def check_file_type(file):
+    import magic
     file_type = magic.from_buffer(file.read())
     for supported_type in list_of_supported_types:
         if supported_type in str(file_type):
