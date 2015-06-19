@@ -40,7 +40,9 @@ INSTALLED_APPS = (
     'texts',
     'moderation',
     'storages',
-    'audio_advertising'
+    'audio_advertising',
+    'user_profiles',
+    'auction',
 
 )
 
